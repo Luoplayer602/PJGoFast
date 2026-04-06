@@ -1,8 +1,31 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@{
+    ViewData["Title"] = "Trang chủ";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<section class="hero-card mb-4">
+    <h1 class="hero-title">Đặt xe nhanh, di chuyển an tâm</h1>
+    <p class="hero-subtitle mb-4">
+        PJGoFast giúp bạn đặt xe trong vài giây, theo dõi tài xế theo thời gian thực và thanh toán thuận tiện.
+        Giao diện được tối ưu cho cả điện thoại và màn hình lớn.
+    </p>
+
+    <div class="d-flex flex-column flex-sm-row gap-2">
+        <a asp-controller="Login" asp-action="Index" class="btn btn-brand btn-lg">Đăng nhập</a>
+        <a asp-controller="Login" asp-action="Register" class="btn btn-outline-primary btn-lg">Tạo tài khoản</a>
+    </div>
+</section>
+
+<section class="feature-list">
+    <article class="feature-item">
+        <h2 class="h5 mb-2">⚡ Đặt xe tức thì</h2>
+        <p class="mb-0 text-secondary">Gợi ý loại xe phù hợp, thao tác đơn giản trong 1 màn hình.</p>
+    </article>
+    <article class="feature-item">
+        <h2 class="h5 mb-2">📍 Theo dõi chuyến đi</h2>
+        <p class="mb-0 text-secondary">Nắm trạng thái chuyến đi rõ ràng, cập nhật liên tục.</p>
+    </article>
+    <article class="feature-item">
+        <h2 class="h5 mb-2">🔐 Bảo mật tài khoản</h2>
+        <p class="mb-0 text-secondary">Xác thực đăng nhập và quản lý thông tin cá nhân an toàn.</p>
+    </article>
+</section>
