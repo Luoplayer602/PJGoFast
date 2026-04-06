@@ -13,7 +13,7 @@ namespace PJGoFast.Models.Entities
 
         //Nullable vì có thể chưa được phân công tài xế
         public string? IdTX { get; set; }
-        public string IdAdmin { get; set; }
+        public string? IdAdmin { get; set; }
 
         [Required]
         public string DiemDon { get; set; }
@@ -28,12 +28,12 @@ namespace PJGoFast.Models.Entities
         [Required]
         public DateTime ThoiGianDon { get; set; }
 
-        public string GhiChu { get; set; }
+        public string? GhiChu { get; set; }
 
         [Required]
         public TrangThaiChuyen TrangThai { get; set; } = TrangThaiChuyen.MOI;
 
-        public decimal GiaTamTinh { get; set; }
+        public decimal? GiaTamTinh { get; set; }
 
         public decimal? GiaThucTe { get; set; }
 

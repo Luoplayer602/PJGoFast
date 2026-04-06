@@ -5,12 +5,16 @@ using System.Linq;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Components.Authorization;
+using Azure.Core;
 
 namespace PJGoFast.Services.Implementations
 {
     public class KhachHangService : IKhachHangService
     {
         private readonly PJGoFastDbContext _context;
+
+        
 
         public KhachHangService(PJGoFastDbContext context)
         {
@@ -22,11 +26,11 @@ namespace PJGoFast.Services.Implementations
         public int DangKy(string sdt, string matKhau, string confirmMatKhau)
         {
             bool isPhoneExist = _context.KhachHangs.Any(kh => kh.SDT == sdt.Trim());
-            if(isPhoneExist)
+            if (isPhoneExist)
             {
                 return 1; // Số điện thoại đã tồn tại
             }
-            else if(matKhau != confirmMatKhau)
+            else if (matKhau != confirmMatKhau)
             {
                 return 3; // Mật khẩu xác nhận không khớp
             }
@@ -57,11 +61,11 @@ namespace PJGoFast.Services.Implementations
         {
             var KhachHang = _context.KhachHangs.FirstOrDefault(kh => kh.SDT == sdt.Trim());
 
-            if(KhachHang == null)
+            if (KhachHang == null)
             {
                 return null; // Số điện thoại không tồn tại
             }
-            else if(!BCrypt.Net.BCrypt.Verify(matKhau, KhachHang.MatKhau))
+            else if (!BCrypt.Net.BCrypt.Verify(matKhau, KhachHang.MatKhau))
             {
                 return null; // Mật khẩu không đúng
             }
@@ -69,7 +73,7 @@ namespace PJGoFast.Services.Implementations
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, KhachHang.IdKH),
-                new Claim(ClaimTypes.Name, KhachHang.HoVaTen),
+                new Claim(ClaimTypes.Name, KhachHang.SDT),
                 new Claim(ClaimTypes.MobilePhone, KhachHang.SDT),
                 new Claim(ClaimTypes.Role, "KhachHang")
             };
@@ -80,7 +84,12 @@ namespace PJGoFast.Services.Implementations
             return principal; // Đăng nhập thành công
         }
 
-        
+        public Models.Entities.KhachHang GetKhachHangById(string idKH)
+        {
+            return _context.KhachHangs.FirstOrDefault(kh => kh.IdKH == idKH);
+
+        }
+
         
     }
 }

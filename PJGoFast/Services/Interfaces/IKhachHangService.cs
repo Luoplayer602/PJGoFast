@@ -10,5 +10,9 @@ namespace PJGoFast.Services.Interfaces
         int DangKy(string sdt, string matKhau, string confirmMatKhau);
 
         ClaimsPrincipal KiemTraDangNhap(string sdt, string matKhau);
+
+        
+
+        Models.Entities.KhachHang GetKhachHangById(string idKH);
     }
 }

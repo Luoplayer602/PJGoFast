@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace GoFast.ViewModels
+namespace PJGoFast.ViewModels
 {
     public class AdminVM
     {

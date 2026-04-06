@@ -8,7 +8,9 @@ using PJGoFast.Services.Interfaces;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddDetection();
 builder.Services.AddScoped<IKhachHangService, KhachHangService>();
+builder.Services.AddScoped<IChuyenDiService, ChuyenDiService>();
 builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<PJGoFastDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.")));
 builder.Services.AddAuthentication("CookieAuth")
@@ -63,6 +65,8 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+
+app.UseDetection();
 app.UseHttpsRedirection();
 app.UseRouting();
 
