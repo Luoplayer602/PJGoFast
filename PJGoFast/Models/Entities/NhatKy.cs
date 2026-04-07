@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PJGoFast.Models.Entities
 {
@@ -23,6 +24,7 @@ namespace PJGoFast.Models.Entities
         public string LogText { get; set; }
 
         //Navigation properties
+        [ForeignKey("IdChuyenDi")]
         public ChuyenDi ChuyenDi { get; set; }
 
     }

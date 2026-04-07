@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PJGoFast.Data;
 
@@ -11,9 +12,11 @@ using PJGoFast.Data;
 namespace PJGoFast.Migrations
 {
     [DbContext(typeof(PJGoFastDbContext))]
-    partial class PJGoFastDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260407031126_PJGoFast02-nullableGhiChu")]
+    partial class PJGoFast02nullableGhiChu
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -94,9 +97,13 @@ namespace PJGoFast.Migrations
 
                     b.Property<string>("IdKH")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("IdTX")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("KhachHangIdKH")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("LoaiXeYeuCau")
@@ -117,9 +124,9 @@ namespace PJGoFast.Migrations
 
                     b.HasIndex("IdAdmin");
 
-                    b.HasIndex("IdKH");
-
                     b.HasIndex("IdTX");
+
+                    b.HasIndex("KhachHangIdKH");
 
                     b.HasIndex("TrangThai", "ThoiGianTao");
 
@@ -165,6 +172,9 @@ namespace PJGoFast.Migrations
                     b.Property<string>("IdNhatKy")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<string>("ChuyenDiIdChuyenDi")
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<string>("IdChuyenDi")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
@@ -189,6 +199,8 @@ namespace PJGoFast.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("IdNhatKy");
+
+                    b.HasIndex("ChuyenDiIdChuyenDi");
 
                     b.HasIndex("IdChuyenDi", "ThoiGian");
 
@@ -283,15 +295,15 @@ namespace PJGoFast.Migrations
                         .WithMany("ChuyenDis")
                         .HasForeignKey("IdAdmin");
 
-                    b.HasOne("PJGoFast.Models.Entities.KhachHang", "KhachHang")
-                        .WithMany("ChuyenDis")
-                        .HasForeignKey("IdKH")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("PJGoFast.Models.Entities.TaiXe", "TaiXe")
                         .WithMany("ChuyenDis")
                         .HasForeignKey("IdTX");
+
+                    b.HasOne("PJGoFast.Models.Entities.KhachHang", "KhachHang")
+                        .WithMany("ChuyenDis")
+                        .HasForeignKey("KhachHangIdKH")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Admin");
 
@@ -304,9 +316,7 @@ namespace PJGoFast.Migrations
                 {
                     b.HasOne("PJGoFast.Models.Entities.ChuyenDi", "ChuyenDi")
                         .WithMany("NhatKys")
-                        .HasForeignKey("IdChuyenDi")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("ChuyenDiIdChuyenDi");
 
                     b.Navigation("ChuyenDi");
                 });

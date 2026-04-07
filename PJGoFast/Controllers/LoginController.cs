@@ -20,11 +20,14 @@ namespace PJGoFast.Controllers
 
         private readonly PJGoFastDbContext _context;
 
-        public LoginController(ILogger<LoginController> logger, IKhachHangService khachHangService, PJGoFastDbContext context)
+        private readonly IAdminService _adminService;
+
+        public LoginController(ILogger<LoginController> logger, IKhachHangService khachHangService, PJGoFastDbContext context, IAdminService adminService)
         {
             _logger = logger;
             _khachHangService = khachHangService;
             _context = context;
+            _adminService = adminService;
         }
 
         [HttpGet]
@@ -60,7 +63,7 @@ namespace PJGoFast.Controllers
 
             
 
-            await HttpContext.SignInAsync("CookieAuth", principal);
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
             //-		$exception	{"No sign-in authentication handler is registered for the scheme 'CookieAuth'. The registered sign-in schemes are: Cookies. Did you forget to call AddAuthentication().AddCookie(\"CookieAuth\",...)?"}	System.InvalidOperationException
 
 
@@ -108,6 +111,44 @@ namespace PJGoFast.Controllers
                 ViewBag.Success = "Đăng ký thành công. Bạn có thể đăng nhập ngay bây giờ.";
                 return RedirectToAction("Index", "Login");
             }
+        }
+
+        [HttpGet]
+        public IActionResult Admin()
+        {
+            if (User.IsInRole("Admin"))
+            {
+                return RedirectToAction("Index", "Admin");
+            }
+            return View();
+        }
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Admin(string sdt, string matKhau, string ReturnUrl)
+        {
+            if (string.IsNullOrEmpty(sdt) || string.IsNullOrEmpty(matKhau))
+            {
+                ViewBag.Error = "Số điện thoại và mật khẩu không được để trống.";
+                return View();
+            }
+
+            var principal = _adminService.KiemTraDangNhap(sdt, matKhau);
+
+            if (principal == null)
+            {
+                ViewBag.Error = "Số điện thoại hoặc mật khẩu không đúng.";
+                return View();
+            }
+
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+
+            if (!string.IsNullOrEmpty(ReturnUrl) && Url.IsLocalUrl(ReturnUrl))
+            {
+                return Redirect(ReturnUrl);
+            }
+            return RedirectToAction("Index", "Admin");
         }
     }
 }

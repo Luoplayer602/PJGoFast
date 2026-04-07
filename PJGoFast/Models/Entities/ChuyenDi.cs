@@ -1,5 +1,6 @@
 ﻿using PJGoFast.Models.Enums;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PJGoFast.Models.Entities
 {
@@ -38,8 +39,11 @@ namespace PJGoFast.Models.Entities
         public decimal? GiaThucTe { get; set; }
 
         //Navigation properties
+        [ForeignKey("IdKH")]
         public KhachHang KhachHang { get; set; }
+        [ForeignKey("IdTX")]
         public TaiXe TaiXe { get; set; }
+        [ForeignKey("IdAdmin")]
         public Admin Admin { get; set; }
         public ThanhToan ThanhToan { get; set; }
         public ICollection<NhatKy> NhatKys { get; set; }

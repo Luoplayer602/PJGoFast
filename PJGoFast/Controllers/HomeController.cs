@@ -2,9 +2,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PJGoFast.Models;
 using PJGoFast.Services.Interfaces;
+using PJGoFast.ViewModels;
 using System.Diagnostics;
 using System.Security.Claims;
-using PJGoFast.ViewModels;
 
 namespace PJGoFast.Controllers
 {
@@ -13,13 +13,13 @@ namespace PJGoFast.Controllers
     {
         private readonly IChuyenDiService _chuyenDiService;
 
-        private readonly ILogger _logger;
+        
 
         private readonly IKhachHangService _khachHangService;
         public HomeController(IChuyenDiService chuyenDiService, IKhachHangService khachHangService)
         {
             _chuyenDiService = chuyenDiService;
-            _logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<HomeController>();
+            
             _khachHangService = khachHangService;
         }
 
@@ -27,48 +27,54 @@ namespace PJGoFast.Controllers
 
         public IActionResult Index()
         {
-            if(User.Identity.IsAuthenticated)
-            {
-                string? IdKH = User.FindFirstValue(ClaimTypes.Name);
-            }
+            
             return View();
         }
 
         [HttpGet]
         public IActionResult taoChuyenDi()
         {
-            return View(new ChuyenDiCreateVM());
+            var model = new ChuyenDiCreateVM()
+            {
+                IdKH = User.FindFirstValue(ClaimTypes.Name)
+
+            };
+
+
+
+            return View(model);
         }
 
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult taoChuyenDiCheck(ChuyenDiCreateVM model)
+        public IActionResult taoChuyenDi(ChuyenDiCreateVM model)
         {
             if (!ModelState.IsValid)
             {
-                @ViewBag.Error = "Vui lòng điền đầy đủ thông tin và đảm bảo dữ liệu hợp lệ.";
+                ViewBag.Error = "Vui lòng điền đầy đủ thông tin và đảm bảo dữ liệu hợp lệ.";
                 return View(model);
             }
-            int result = _chuyenDiService.TaoChuyenDi(model.DiemDon, model.DiemDen, model.ThoiGianDon, model.LoaiXeYeuCau, model.GhiChu, User.FindFirstValue(ClaimTypes.Name));
-            if(result == 0)
+            int result = _chuyenDiService.TaoChuyenDi(model.DiemDon, model.DiemDen, model.ThoiGianDon, model.LoaiXeYeuCau, model.GhiChu, model.IdKH);
+            if (result == 0)
             {
-                @ViewBag.Success = "Tạo chuyến đi thành công!";
+                ViewBag.Success = "Tạo chuyến đi thành công!";
                 return View();
             }
             else
             {
-                @ViewBag.Error = "Đã xảy ra lỗi khi tạo chuyến đi. Vui lòng thử lại.";
+                ViewBag.Error = "Đã xảy ra lỗi khi tạo chuyến đi. Vui lòng thử lại.";
                 return View();
             }
         }
 
 
-        [HttpGet]
-        public IActionResult taoChuyenDi01(string diemDen)
+        [HttpPost]
+        public IActionResult taoChuyenDiWDiemDen(string diemDen)
         {
             var model = new ChuyenDiCreateVM
             {
+                IdKH = User.FindFirstValue(ClaimTypes.Name),
                 DiemDen = diemDen
             };
             return View("taoChuyenDi", model);

@@ -73,9 +73,10 @@ namespace PJGoFast.Services.Implementations
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, KhachHang.IdKH),
-                new Claim(ClaimTypes.Name, KhachHang.SDT),
+                new Claim(ClaimTypes.Name, KhachHang.IdKH),
                 new Claim(ClaimTypes.MobilePhone, KhachHang.SDT),
-                new Claim(ClaimTypes.Role, "KhachHang")
+                new Claim(ClaimTypes.Role, "KhachHang"),
+                new Claim("IdKH", KhachHang.IdKH)
             };
 
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);

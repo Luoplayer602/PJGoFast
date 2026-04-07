@@ -1,4 +1,5 @@
-﻿@using PJGoFast.ViewModels
+﻿@using PJGoFast.Models.Enums
+@using PJGoFast.ViewModels
 @*
     For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 *@
@@ -30,12 +31,29 @@
             <!-- Form Card -->
             <div class="card shadow-sm border-0 rounded-4">
                 <div class="card-body p-4">
-                    <form asp-action="Create" method="post">
+                    @if (!string.IsNullOrEmpty(ViewBag.Error))
+                    {
+                        <div class="alert alert-dismissible fade show shadow-sm" role="alert">
+                            @ViewBag.Error
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        
+                    }
+                    @if (!string.IsNullOrEmpty(ViewBag.Success))
+                    {
+                        <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+                            @ViewBag.Success
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+                    
+                    <form asp-action="taoChuyenDi" asp-controller="Home" method="post">
                         @Html.AntiForgeryToken()
 
                         <!-- IdKH (hidden) -->
                         <input asp-for="IdKH" type="hidden" />
-                        <span asp-validation-for="IdKH" class="text-danger small"></span>
+
+                        
 
                         <!-- ThoiGianTao (hidden) -->
                         <input asp-for="ThoiGianTao" type="hidden" />
@@ -86,14 +104,11 @@
                                     <span class="input-group-text bg-light border-end-0">
                                         <i class="bi bi-car-front text-primary"></i>
                                     </span>
-                                    <select asp-for="LoaiXeYeuCau" class="form-select border-start-0">
+                                    <select asp-for="LoaiXeYeuCau" asp-items="Html.GetEnumSelectList<LoaiXe>()" class="form-select border-start-0">
                                         <option value="">-- Chọn loại xe --</option>
-                                        <option value="4cho">Xe 4 chỗ</option>
-                                        <option value="7cho">Xe 7 chỗ</option>
-                                        <option value="16cho">Xe 16 chỗ</option>
-                                        <option value="29cho">Xe 29 chỗ</option>
-                                        <option value="45cho">Xe 45 chỗ</option>
+                                        
                                     </select>
+                                    <span asp-validation-for="LoaiXeYeuCau" class="text-danger"></span>
                                 </div>
                                 <span asp-validation-for="LoaiXeYeuCau" class="text-danger small"></span>
                             </div>
@@ -123,7 +138,7 @@
                             <textarea asp-for="GhiChu"
                                       class="form-control"
                                       rows="3"
-                                      placeholder="Nhập ghi chú thêm nếu có..."></textarea>
+                                      placeholder="Nhập ghi chú thêm nếu có..." ></textarea>
                             <span asp-validation-for="GhiChu" class="text-danger small"></span>
                         </div>
 
@@ -148,48 +163,3 @@
     </div>
 </div>
 
-@section Styles {
-    <style>
-        .icon-wrap {
-            width: 44px;
-            height: 44px;
-            background: linear-gradient(135deg, #0d6efd22, #0d6efd44);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.3rem;
-            color: #0d6efd;
-        }
-
-        .card {
-            border: 1px solid #e9ecef !important;
-        }
-
-        .input-group-text {
-            border-right: none;
-        }
-
-        .form-control:focus,
-        .form-select:focus {
-            border-color: #86b7fe;
-            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #0d6efd, #0b5ed7);
-            border: none;
-            transition: opacity 0.2s;
-        }
-
-            .btn-primary:hover {
-                opacity: 0.9;
-            }
-    </style>
-}
-
-@section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
-}

@@ -1,4 +1,6 @@
-﻿namespace PJGoFast.Models.Enums
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace PJGoFast.Models.Enums
 {
     public enum TrangThaiChuyen
     {
@@ -21,9 +23,15 @@
 
     public enum LoaiXe
     {
+        [Display(Name = "Xe máy")]
         XeMay = 0,
+        [Display(Name = "Xe sedan")]
         Sedan = 1,
+        [Display(Name = "Xe SUV")]
         SUV = 2,
-        BayCho = 3
+        [Display(Name = "Xe bảy chỗ")]
+        BayCho = 3,
+        [Display(Name = "Xe tải nhỏ")]
+        TaiNho = 4
     }
 }

@@ -1,7 +1,8 @@
-﻿using PJGoFast.Models.Entities;
+﻿using Microsoft.EntityFrameworkCore;
 using PJGoFast.Data;
-using PJGoFast.Services.Interfaces;
+using PJGoFast.Models.Entities;
 using PJGoFast.Models.Enums;
+using PJGoFast.Services.Interfaces;
 using PJGoFast.ViewModels;
 
 
@@ -11,15 +12,15 @@ namespace PJGoFast.Services.Implementations
     {
         private readonly PJGoFastDbContext _context;
 
-        private readonly ILogger<ChuyenDiService> _logger;
+        
 
         public ChuyenDiService(PJGoFastDbContext context)
         {
             _context = context;
-            _logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<ChuyenDiService>();
+            
         }
 
-        public int TaoChuyenDi(string diemDon, string diemDen, DateTime TGDon, string loaiXe, string ghiChu, string IdKhachHang)
+        public int TaoChuyenDi(string diemDon, string diemDen, DateTime TGDon, LoaiXe loaiXe, string ghiChu, string IdKhachHang)
         {
             var newChuyenDi = new ChuyenDi
             {
@@ -29,7 +30,7 @@ namespace PJGoFast.Services.Implementations
                 DiemDon = diemDon,
                 ThoiGianTao = DateTime.Now,
                 TrangThai = TrangThaiChuyen.MOI,
-                LoaiXeYeuCau = (LoaiXe)Enum.Parse(typeof(LoaiXe), loaiXe),
+                LoaiXeYeuCau = loaiXe,
                 ThoiGianDon = TGDon,
                 GhiChu = ghiChu
             };
@@ -43,7 +44,8 @@ namespace PJGoFast.Services.Implementations
             }
             catch (Exception ex)
             {
-                // Log lỗi nếu cần thiết
+                
+                
                 return 1; // Lỗi khi lưu dữ liệu
             }
         }

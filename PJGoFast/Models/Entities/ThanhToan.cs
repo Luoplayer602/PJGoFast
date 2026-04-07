@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PJGoFast.Models.Entities
 {
@@ -19,24 +20,11 @@ namespace PJGoFast.Models.Entities
         public DateTime ThoiGianGhiNhan { get; set; } = DateTime.Now;
 
         //Navigation properties
+        [ForeignKey("IdChuyenDi")]
         public ChuyenDi ChuyenDi { get; set; }
     }
 
     
-        public class ThanhToanVM
-        {
-            public string IdThanhToan { get; set; }
-
-            public string TrangThaiThanhToan { get; set; }
-
-            public string PhuongThucThanhToan { get; set; }
-
-            public decimal SoTienThanhToan { get; set; }
-
-            public DateTime ThoiGianGhiNhan { get; set; }
-
-            // Thông tin liên kết
-            public string IdChuyenDi { get; set; }
-        }
+      
     
 }
