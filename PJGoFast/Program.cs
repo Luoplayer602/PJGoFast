@@ -13,6 +13,7 @@ builder.Services.AddScoped<IKhachHangService, KhachHangService>();
 builder.Services.AddScoped<IChuyenDiService, ChuyenDiService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddControllersWithViews();
+builder.Services.AddHttpClient();
 builder.Services.AddDbContext<PJGoFastDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.")));
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
