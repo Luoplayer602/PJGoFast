@@ -1,15 +1,113 @@
-﻿@using PJGoFast.Models.Enums
+@using PJGoFast.Models.Enums
 @using PJGoFast.ViewModels
-@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
-}
 @model ChuyenDiCreateVM
 
 @{
     ViewData["Title"] = "Tạo Chuyến Đi Mới";
 }
+
+<style>
+    .autocomplete-wrapper {
+        position: relative;
+    }
+
+    .autocomplete-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 1050;
+        background: #fff;
+        border: 1px solid #dee2e6;
+        border-top: none;
+        border-radius: 0 0 0.5rem 0.5rem;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+        max-height: 260px;
+        overflow-y: auto;
+        display: none;
+    }
+
+    .autocomplete-dropdown.show {
+        display: block;
+    }
+
+    .autocomplete-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 10px 14px;
+        cursor: pointer;
+        transition: background 0.15s;
+        border-bottom: 1px solid #f1f1f1;
+    }
+
+    .autocomplete-item:last-child {
+        border-bottom: none;
+    }
+
+    .autocomplete-item:hover,
+    .autocomplete-item.active {
+        background-color: #f0f7ff;
+    }
+
+    .autocomplete-item .place-icon {
+        flex-shrink: 0;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        margin-top: 2px;
+    }
+
+    .autocomplete-item .place-text {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .autocomplete-item .place-main {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #1a1a2e;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .autocomplete-item .place-secondary {
+        font-size: 0.78rem;
+        color: #6c757d;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .autocomplete-loading {
+        padding: 12px 14px;
+        text-align: center;
+        color: #6c757d;
+        font-size: 0.85rem;
+    }
+
+    .autocomplete-empty {
+        padding: 12px 14px;
+        text-align: center;
+        color: #adb5bd;
+        font-size: 0.85rem;
+    }
+
+    /* Input active state */
+    .autocomplete-input:focus ~ .autocomplete-dropdown,
+    .autocomplete-input.has-dropdown {
+        border-radius: 0.375rem 0.375rem 0 0;
+    }
+
+    .input-group:has(.autocomplete-input:focus) .input-group-text {
+        border-color: #86b7fe;
+    }
+</style>
 
 <div class="container py-5">
     <div class="row justify-content-center">
@@ -37,7 +135,6 @@
                             @ViewBag.Error
                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
-                        
                     }
                     @if (!string.IsNullOrEmpty(ViewBag.Success))
                     {
@@ -46,51 +143,63 @@
                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
                     }
-                    
+
                     <form asp-action="taoChuyenDi" asp-controller="Home" method="post">
                         @Html.AntiForgeryToken()
 
                         <!-- IdKH (hidden) -->
                         <input asp-for="IdKH" type="hidden" />
 
-                        
-
                         <!-- ThoiGianTao (hidden) -->
                         <input asp-for="ThoiGianTao" type="hidden" />
 
                         <!-- Row: Điểm đón & Điểm đến -->
                         <div class="row g-3 mb-3">
+
+                            <!-- Điểm Đón -->
                             <div class="col-md-6">
                                 <label asp-for="DiemDon" class="form-label fw-semibold">
                                     <i class="bi bi-geo-alt text-success me-1"></i>Điểm Đón
                                     <span class="text-danger">*</span>
                                 </label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-light border-end-0">
-                                        <i class="bi bi-pin-map-fill text-success"></i>
-                                    </span>
-                                    <input asp-for="DiemDon"
-                                           class="form-control border-start-0 ps-0"
-                                           placeholder="Nhập điểm đón..." />
+                                <div class="autocomplete-wrapper">
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0">
+                                            <i class="bi bi-pin-map-fill text-success"></i>
+                                        </span>
+                                        <input asp-for="DiemDon"
+                                               id="DiemDon"
+                                               class="form-control border-start-0 ps-0 autocomplete-input"
+                                               placeholder="Nhập điểm đón..."
+                                               autocomplete="off" />
+                                    </div>
+                                    <div id="DiemDon-dropdown" class="autocomplete-dropdown"></div>
                                 </div>
                                 <span asp-validation-for="DiemDon" class="text-danger small"></span>
                             </div>
 
+                            <!-- Điểm Đến -->
                             <div class="col-md-6">
                                 <label asp-for="DiemDen" class="form-label fw-semibold">
                                     <i class="bi bi-geo-alt-fill text-danger me-1"></i>Điểm Đến
                                     <span class="text-danger">*</span>
                                 </label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-light border-end-0">
-                                        <i class="bi bi-pin-map-fill text-danger"></i>
-                                    </span>
-                                    <input asp-for="DiemDen"
-                                           class="form-control border-start-0 ps-0"
-                                           placeholder="Nhập điểm đến..." />
+                                <div class="autocomplete-wrapper">
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0">
+                                            <i class="bi bi-pin-map-fill text-danger"></i>
+                                        </span>
+                                        <input asp-for="DiemDen"
+                                               id="DiemDen"
+                                               class="form-control border-start-0 ps-0 autocomplete-input"
+                                               placeholder="Nhập điểm đến..."
+                                               autocomplete="off" />
+                                    </div>
+                                    <div id="DiemDen-dropdown" class="autocomplete-dropdown"></div>
                                 </div>
                                 <span asp-validation-for="DiemDen" class="text-danger small"></span>
                             </div>
+
                         </div>
 
                         <!-- Row: Loại xe & Thời gian đón -->
@@ -106,7 +215,6 @@
                                     </span>
                                     <select asp-for="LoaiXeYeuCau" asp-items="Html.GetEnumSelectList<LoaiXe>()" class="form-select border-start-0">
                                         <option value="">-- Chọn loại xe --</option>
-                                        
                                     </select>
                                     <span asp-validation-for="LoaiXeYeuCau" class="text-danger"></span>
                                 </div>
@@ -138,7 +246,7 @@
                             <textarea asp-for="GhiChu"
                                       class="form-control"
                                       rows="3"
-                                      placeholder="Nhập ghi chú thêm nếu có..." ></textarea>
+                                      placeholder="Nhập ghi chú thêm nếu có..."></textarea>
                             <span asp-validation-for="GhiChu" class="text-danger small"></span>
                         </div>
 
@@ -163,3 +271,178 @@
     </div>
 </div>
 
+@section Scripts {
+<script>
+    const GOONG_API_KEY = 'H1eRRpu0DSAzfyP9x24rHLNX7OVocfHYoxVhCvGX';
+    const GOONG_API_URL = 'https://rsapi.goong.io/v2/place/autocomplete';
+
+    // Màu icon theo loại địa điểm
+    const typeColorMap = {
+        'route':           { bg: '#e8f5e9', color: '#2e7d32', icon: 'bi-sign-turn-right-fill' },
+        'establishment':   { bg: '#e3f2fd', color: '#1565c0', icon: 'bi-building'              },
+        'point_of_interest':{ bg: '#fff3e0', color: '#e65100', icon: 'bi-star-fill'            },
+        'premise':         { bg: '#f3e5f5', color: '#6a1b9a', icon: 'bi-house-door-fill'       },
+        'street_address':  { bg: '#e8f5e9', color: '#2e7d32', icon: 'bi-geo-alt-fill'          },
+        'default':         { bg: '#f5f5f5', color: '#616161', icon: 'bi-geo-alt-fill'          },
+    };
+
+    function getTypeStyle(types) {
+        if (!types || types.length === 0) return typeColorMap['default'];
+        for (const t of types) {
+            if (typeColorMap[t]) return typeColorMap[t];
+        }
+        return typeColorMap['default'];
+    }
+
+    function initAutocomplete(inputId, dropdownId) {
+        const input    = document.getElementById(inputId);
+        const dropdown = document.getElementById(dropdownId);
+        let debounceTimer = null;
+        let activeIndex  = -1;
+        let suggestions  = [];
+
+        input.addEventListener('input', () => {
+            const query = input.value.trim();
+            clearTimeout(debounceTimer);
+            activeIndex = -1;
+
+            if (query.length < 2) {
+                closeDropdown();
+                return;
+            }
+
+            showLoading();
+
+            debounceTimer = setTimeout(() => fetchSuggestions(query), 300);
+        });
+
+        input.addEventListener('keydown', (e) => {
+            const items = dropdown.querySelectorAll('.autocomplete-item');
+            if (!items.length) return;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                activeIndex = (activeIndex + 1) % items.length;
+                updateActive(items);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                activeIndex = (activeIndex - 1 + items.length) % items.length;
+                updateActive(items);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (activeIndex >= 0 && suggestions[activeIndex]) {
+                    selectSuggestion(suggestions[activeIndex]);
+                }
+            } else if (e.key === 'Escape') {
+                closeDropdown();
+            }
+        });
+
+        // Đóng dropdown khi click ra ngoài
+        document.addEventListener('click', (e) => {
+            if (!input.closest('.autocomplete-wrapper').contains(e.target)) {
+                closeDropdown();
+            }
+        });
+
+        function updateActive(items) {
+            items.forEach((el, i) => {
+                el.classList.toggle('active', i === activeIndex);
+            });
+        }
+
+        async function fetchSuggestions(query) {
+            try {
+                const url = `${GOONG_API_URL}?input=${encodeURIComponent(query)}&api_key=${GOONG_API_KEY}`;
+                const res  = await fetch(url);
+                const data = await res.json();
+
+                if (data.predictions && data.predictions.length > 0) {
+                    suggestions = data.predictions;
+                    renderDropdown(suggestions);
+                } else {
+                    suggestions = [];
+                    showEmpty();
+                }
+            } catch (err) {
+                console.error('Goong API error:', err);
+                closeDropdown();
+            }
+        }
+
+        function renderDropdown(predictions) {
+            dropdown.innerHTML = '';
+            predictions.forEach((place, idx) => {
+                const mainText      = place.structured_formatting?.main_text      || place.description;
+                const secondaryText = place.structured_formatting?.secondary_text || '';
+                const style         = getTypeStyle(place.types);
+
+                const item = document.createElement('div');
+                item.className = 'autocomplete-item';
+                item.dataset.index = idx;
+                item.innerHTML = `
+                    <div class="place-icon" style="background:${style.bg}; color:${style.color}">
+                        <i class="bi ${style.icon}"></i>
+                    </div>
+                    <div class="place-text">
+                        <div class="place-main">${escapeHtml(mainText)}</div>
+                        ${secondaryText ? `<div class="place-secondary">${escapeHtml(secondaryText)}</div>` : ''}
+                    </div>`;
+
+                item.addEventListener('mousedown', (e) => {
+                    e.preventDefault(); // Tránh blur input trước khi chọn
+                    selectSuggestion(place);
+                });
+
+                item.addEventListener('mouseover', () => {
+                    activeIndex = idx;
+                    updateActive(dropdown.querySelectorAll('.autocomplete-item'));
+                });
+
+                dropdown.appendChild(item);
+            });
+            openDropdown();
+        }
+
+        function selectSuggestion(place) {
+            input.value = place.description;
+            closeDropdown();
+            input.dispatchEvent(new Event('change'));
+        }
+
+        function showLoading() {
+            dropdown.innerHTML = `<div class="autocomplete-loading"><span class="spinner-border spinner-border-sm me-2" role="status"></span>Đang tìm kiếm...</div>`;
+            openDropdown();
+        }
+
+        function showEmpty() {
+            dropdown.innerHTML = `<div class="autocomplete-empty"><i class="bi bi-search me-1"></i>Không tìm thấy địa điểm phù hợp</div>`;
+            openDropdown();
+        }
+
+        function openDropdown() {
+            dropdown.classList.add('show');
+            // Bo tròn input khi có dropdown
+            input.closest('.input-group').querySelector('input').style.borderBottomLeftRadius  = '0';
+            input.closest('.input-group').querySelector('input').style.borderBottomRightRadius = '0';
+        }
+
+        function closeDropdown() {
+            dropdown.classList.remove('show');
+            activeIndex = -1;
+            input.style.borderBottomLeftRadius  = '';
+            input.style.borderBottomRightRadius = '';
+        }
+    }
+
+    function escapeHtml(text) {
+        const d = document.createElement('div');
+        d.appendChild(document.createTextNode(text));
+        return d.innerHTML;
+    }
+
+    // Khởi tạo cho cả 2 ô nhập
+    initAutocomplete('DiemDon', 'DiemDon-dropdown');
+    initAutocomplete('DiemDen', 'DiemDen-dropdown');
+</script>
+}

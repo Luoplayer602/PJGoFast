@@ -20,7 +20,7 @@ namespace PJGoFast.Services.Implementations
             
         }
 
-        public int TaoChuyenDi(string diemDon, string diemDen, DateTime TGDon, LoaiXe loaiXe, string ghiChu, string IdKhachHang)
+        public string TaoChuyenDi(string diemDon, string diemDen, DateTime TGDon, LoaiXe loaiXe, string ghiChu, string IdKhachHang)
         {
             var newChuyenDi = new ChuyenDi
             {
@@ -39,14 +39,14 @@ namespace PJGoFast.Services.Implementations
             {
                 _context.ChuyenDis.Add(newChuyenDi);
                 _context.SaveChanges();
-                return 0; // Tạo chuyến đi thành công
+                return newChuyenDi.IdChuyenDi; // Tạo chuyến đi thành công
 
             }
             catch (Exception ex)
             {
                 
                 
-                return 1; // Lỗi khi lưu dữ liệu
+                return "0"; // Lỗi khi lưu dữ liệu
             }
         }
     }

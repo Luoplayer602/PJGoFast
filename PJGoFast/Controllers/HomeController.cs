@@ -55,11 +55,11 @@ namespace PJGoFast.Controllers
                 ViewBag.Error = "Vui lòng điền đầy đủ thông tin và đảm bảo dữ liệu hợp lệ.";
                 return View(model);
             }
-            int result = _chuyenDiService.TaoChuyenDi(model.DiemDon, model.DiemDen, model.ThoiGianDon, model.LoaiXeYeuCau, model.GhiChu, model.IdKH);
-            if (result == 0)
+            string result = _chuyenDiService.TaoChuyenDi(model.DiemDon, model.DiemDen, model.ThoiGianDon, model.LoaiXeYeuCau, model.GhiChu, model.IdKH);
+            if (result != "0")
             {
                 ViewBag.Success = "Tạo chuyến đi thành công!";
-                return View();
+                return baoGia(result);
             }
             else
             {
@@ -80,7 +80,10 @@ namespace PJGoFast.Controllers
             return View("taoChuyenDi", model);
         }
 
+        public IActionResult baoGia(string IdChuyenDi)
+        {
 
+        }
 
 
 

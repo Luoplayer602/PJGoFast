@@ -32,7 +32,7 @@ namespace PJGoFast.Services.Implementations
             {
                 new Claim(ClaimTypes.NameIdentifier, Admin.IdAdmin),
                 new Claim(ClaimTypes.Name, Admin.HoVaTen),
-                new Claim(ClaimTypes.Role, Admin.VaiTro)
+                new Claim(ClaimTypes.Role, Admin.VaiTro) 
             };
 
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
