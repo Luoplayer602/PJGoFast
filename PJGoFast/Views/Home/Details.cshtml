@@ -1,0 +1,79 @@
+@model PJGoFast.ViewModels.ChuyenDiHistoryDetailsVM
+
+@{
+    ViewData["Title"] = "Chi tiết chuyến";
+}
+
+<div class="container py-3 py-md-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h1 class="h4 mb-0">Chi tiết chuyến đi</h1>
+        <a asp-action="History" class="btn btn-outline-secondary btn-sm">Quay lại</a>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 mb-3">
+        <div class="card-body p-4">
+            <h2 class="h6 text-muted text-uppercase mb-3">Thông tin chuyến đi</h2>
+            <div class="row g-3">
+                <div class="col-md-6"><strong>Mã chuyến:</strong> <span class="text-break">@Model.IdChuyenDi</span></div>
+                <div class="col-md-6"><strong>Trạng thái:</strong> @Model.TrangThai</div>
+                <div class="col-md-6"><strong>Điểm đón:</strong> @Model.DiemDon</div>
+                <div class="col-md-6"><strong>Điểm đến:</strong> @Model.DiemDen</div>
+                <div class="col-md-6"><strong>Loại xe:</strong> @Model.LoaiXeYeuCau</div>
+                <div class="col-md-6"><strong>Thời gian tạo:</strong> @Model.ThoiGianTao.ToString("HH:mm dd/MM/yyyy")</div>
+                <div class="col-md-6"><strong>Thời gian đón:</strong> @Model.ThoiGianDon.ToString("HH:mm dd/MM/yyyy")</div>
+                <div class="col-md-6"><strong>Giá tạm tính:</strong> @(Model.GiaTamTinh.HasValue ? string.Format("{0:N0} đ", Model.GiaTamTinh.Value) : "-")</div>
+                <div class="col-md-6"><strong>Giá thực tế:</strong> @(Model.GiaThucTe.HasValue ? string.Format("{0:N0} đ", Model.GiaThucTe.Value) : "-")</div>
+                <div class="col-12"><strong>Ghi chú:</strong> @(string.IsNullOrWhiteSpace(Model.GhiChu) ? "Không có" : Model.GhiChu)</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4">
+            <h2 class="h6 text-muted text-uppercase mb-3">Nhật ký chuyến đi</h2>
+
+            @if (Model.NhatKys == null || !Model.NhatKys.Any())
+            {
+                <div class="alert alert-light border mb-0">Chưa có nhật ký cho chuyến đi này.</div>
+            }
+            else
+            {
+                <div class="table-responsive d-none d-md-block">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Thời gian</th>
+                                <th>Người thực hiện</th>
+                                <th>Trạng thái</th>
+                                <th>Nội dung</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var log in Model.NhatKys)
+                        {
+                            <tr>
+                                <td>@log.ThoiGian.ToString("HH:mm dd/MM/yyyy")</td>
+                                <td>@log.ThucHienBoi</td>
+                                <td>@log.TrangThaiCu → @log.TrangThaiMoi</td>
+                                <td>@(string.IsNullOrWhiteSpace(log.LogText) ? "-" : log.LogText)</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-grid gap-2 d-md-none">
+                    @foreach (var log in Model.NhatKys)
+                    {
+                        <div class="border rounded-3 p-3 bg-light">
+                            <div class="small text-muted">@log.ThoiGian.ToString("HH:mm dd/MM/yyyy")</div>
+                            <div><strong>@log.ThucHienBoi</strong></div>
+                            <div class="small">@log.TrangThaiCu → @log.TrangThaiMoi</div>
+                            <div class="small mt-1">@(string.IsNullOrWhiteSpace(log.LogText) ? "-" : log.LogText)</div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
