@@ -8,6 +8,7 @@ namespace PJGoFast.Services.Interfaces
         string TaoChuyenDi(string diemDon, string diemDen, DateTime TGDon, LoaiXe loaiXe, string ghiChu, string IdKhachHang);
 
         ChuyenDi? LayChuyenDiTheoId(string id);
+        ChuyenDi? LayChiTietChuyenDiCuaKhachHang(string idChuyenDi, string idKhachHang);
 
         List<ChuyenDi> LayLichSuChuyenDiTheoKhachHang(string idKhachHang);
 

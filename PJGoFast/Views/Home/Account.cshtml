@@ -1,0 +1,40 @@
+@model PJGoFast.ViewModels.AccountVM
+
+@{
+    ViewData["Title"] = "Tài khoản";
+}
+
+<div class="container py-3 py-md-4">
+    <h1 class="h4 mb-3">Thông tin tài khoản</h1>
+
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="text-muted small">Mã khách hàng</div>
+                    <div class="fw-semibold text-break">@Model.IdKH</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="text-muted small">Họ và tên</div>
+                    <div class="fw-semibold">@Model.HoVaTen</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="text-muted small">Số điện thoại</div>
+                    <div class="fw-semibold">@Model.SDT</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="text-muted small">Email</div>
+                    <div class="fw-semibold">@(string.IsNullOrWhiteSpace(Model.Email) ? "Chưa cập nhật" : Model.Email)</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="text-muted small">Ngày sinh</div>
+                    <div class="fw-semibold">@(Model.NgaySinh.HasValue ? Model.NgaySinh.Value.ToString("dd/MM/yyyy") : "Chưa cập nhật")</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="text-muted small">Ngày đăng ký</div>
+                    <div class="fw-semibold">@Model.NgayDangKy.ToString("HH:mm dd/MM/yyyy")</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

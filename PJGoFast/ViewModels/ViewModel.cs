@@ -159,6 +159,31 @@ namespace PJGoFast.ViewModels
         public decimal? GiaTamTinh { get; set; }
     }
 
+    public class ChuyenDiHistoryDetailsVM
+    {
+        public string IdChuyenDi { get; set; }
+        public string DiemDon { get; set; }
+        public string DiemDen { get; set; }
+        public LoaiXe LoaiXeYeuCau { get; set; }
+        public TrangThaiChuyen TrangThai { get; set; }
+        public DateTime ThoiGianTao { get; set; }
+        public DateTime ThoiGianDon { get; set; }
+        public string? GhiChu { get; set; }
+        public decimal? GiaTamTinh { get; set; }
+        public decimal? GiaThucTe { get; set; }
+        public List<NhatKyVM> NhatKys { get; set; } = new();
+    }
+
+    public class AccountVM
+    {
+        public string IdKH { get; set; }
+        public string HoVaTen { get; set; }
+        public string SDT { get; set; }
+        public string? Email { get; set; }
+        public DateTime? NgaySinh { get; set; }
+        public DateTime NgayDangKy { get; set; }
+    }
+
     public class ThanhToanVM
     {
         public string IdThanhToan { get; set; }

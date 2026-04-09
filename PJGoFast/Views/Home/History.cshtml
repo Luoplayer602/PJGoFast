@@ -4,8 +4,11 @@
     ViewData["Title"] = "Lịch sử chuyến đi";
 }
 
-<div class="container py-4">
-    <h1 class="h3 mb-3">Lịch sử chuyến đi</h1>
+<div class="container py-3 py-md-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h1 class="h4 h3-md mb-0">Lịch sử chuyến đi</h1>
+        <a asp-action="taoChuyenDi" class="btn btn-sm btn-primary">+ Tạo chuyến</a>
+    </div>
 
     @if (Model == null || !Model.Any())
     {
@@ -13,7 +16,7 @@
     }
     else
     {
-        <div class="table-responsive">
+        <div class="d-none d-md-block table-responsive">
             <table class="table table-striped table-hover align-middle">
                 <thead>
                     <tr>
@@ -25,13 +28,14 @@
                         <th>Thời gian tạo</th>
                         <th>Thời gian đón</th>
                         <th>Giá tạm tính</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var item in Model)
                     {
                         <tr>
-                            <td>@item.IdChuyenDi</td>
+                            <td class="text-break" style="max-width:130px">@item.IdChuyenDi</td>
                             <td>@item.DiemDon</td>
                             <td>@item.DiemDen</td>
                             <td>@item.LoaiXeYeuCau</td>
@@ -39,10 +43,30 @@
                             <td>@item.ThoiGianTao.ToString("HH:mm dd/MM/yyyy")</td>
                             <td>@item.ThoiGianDon.ToString("HH:mm dd/MM/yyyy")</td>
                             <td>@(item.GiaTamTinh.HasValue ? string.Format("{0:N0} đ", item.GiaTamTinh.Value) : "-")</td>
+                            <td>
+                                <a asp-action="Details" asp-route-id="@item.IdChuyenDi" class="btn btn-outline-primary btn-sm">Chi tiết</a>
+                            </td>
                         </tr>
                     }
                 </tbody>
             </table>
+        </div>
+
+        <div class="d-md-none d-grid gap-2">
+            @foreach (var item in Model)
+            {
+                <div class="card shadow-sm border-0 rounded-4">
+                    <div class="card-body">
+                        <div class="small text-muted mb-1">@item.IdChuyenDi</div>
+                        <div class="fw-semibold">@item.DiemDon → @item.DiemDen</div>
+                        <div class="small mt-2">Loại xe: <strong>@item.LoaiXeYeuCau</strong></div>
+                        <div class="small">Trạng thái: <strong>@item.TrangThai</strong></div>
+                        <div class="small">Đón: @item.ThoiGianDon.ToString("HH:mm dd/MM/yyyy")</div>
+                        <div class="small mb-3">Tạm tính: @(item.GiaTamTinh.HasValue ? string.Format("{0:N0} đ", item.GiaTamTinh.Value) : "-")</div>
+                        <a asp-action="Details" asp-route-id="@item.IdChuyenDi" class="btn btn-primary btn-sm w-100">Xem chi tiết</a>
+                    </div>
+                </div>
+            }
         </div>
     }
 </div>

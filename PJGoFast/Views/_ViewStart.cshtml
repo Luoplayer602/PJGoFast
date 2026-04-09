@@ -1,3 +1,6 @@
 ﻿@{
-    Layout = "_Layout";
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    Layout = string.Equals(controller, "Home", StringComparison.OrdinalIgnoreCase)
+        ? "_LayoutMobile"
+        : "_Layout";
 }

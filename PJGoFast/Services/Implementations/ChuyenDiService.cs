@@ -57,6 +57,13 @@ namespace PJGoFast.Services.Implementations
                 .FirstOrDefault(c => c.IdChuyenDi == id);
         }
 
+        public ChuyenDi? LayChiTietChuyenDiCuaKhachHang(string idChuyenDi, string idKhachHang)
+        {
+            return _context.ChuyenDis
+                .Include(c => c.NhatKys)
+                .FirstOrDefault(c => c.IdChuyenDi == idChuyenDi && c.IdKH == idKhachHang);
+        }
+
         public List<ChuyenDi> LayLichSuChuyenDiTheoKhachHang(string idKhachHang)
         {
             return _context.ChuyenDis

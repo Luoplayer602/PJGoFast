@@ -76,9 +76,86 @@ namespace PJGoFast.Controllers
             return View(lichSu);
         }
 
+        [HttpGet]
+        public IActionResult Details(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                return NotFound();
+            }
+
+            var idKhachHang = User.FindFirstValue(ClaimTypes.Name);
+            if (string.IsNullOrWhiteSpace(idKhachHang))
+            {
+                return Challenge();
+            }
+
+            var chuyenDi = _chuyenDiService.LayChiTietChuyenDiCuaKhachHang(id, idKhachHang);
+            if (chuyenDi == null)
+            {
+                return NotFound();
+            }
+
+            var model = new ChuyenDiHistoryDetailsVM
+            {
+                IdChuyenDi = chuyenDi.IdChuyenDi,
+                DiemDon = chuyenDi.DiemDon,
+                DiemDen = chuyenDi.DiemDen,
+                LoaiXeYeuCau = chuyenDi.LoaiXeYeuCau,
+                TrangThai = chuyenDi.TrangThai,
+                ThoiGianTao = chuyenDi.ThoiGianTao,
+                ThoiGianDon = chuyenDi.ThoiGianDon,
+                GhiChu = chuyenDi.GhiChu,
+                GiaTamTinh = chuyenDi.GiaTamTinh,
+                GiaThucTe = chuyenDi.GiaThucTe,
+                NhatKys = (chuyenDi.NhatKys ?? Enumerable.Empty<Models.Entities.NhatKy>())
+                    .OrderByDescending(nk => nk.ThoiGian)
+                    .Select(nk => new NhatKyVM
+                    {
+                        IdNhatKy = nk.IdNhatKy,
+                        TrangThaiCu = nk.TrangThaiCu,
+                        TrangThaiMoi = nk.TrangThaiMoi,
+                        ThucHienBoi = nk.ThucHienBoi,
+                        ThoiGian = nk.ThoiGian,
+                        LogText = nk.LogText
+                    })
+                    .ToList()
+            };
+
+            return View(model);
+        }
+
         // Giữ tương thích với route cũ bị gõ nhầm "Histoty"
         [HttpGet]
         public IActionResult Histoty() => RedirectToAction(nameof(History));
+
+        [HttpGet]
+        public IActionResult Account()
+        {
+            var idKhachHang = User.FindFirstValue(ClaimTypes.Name);
+            if (string.IsNullOrWhiteSpace(idKhachHang))
+            {
+                return Challenge();
+            }
+
+            var khachHang = _khachHangService.GetKhachHangById(idKhachHang);
+            if (khachHang == null)
+            {
+                return NotFound();
+            }
+
+            var model = new AccountVM
+            {
+                IdKH = khachHang.IdKH,
+                HoVaTen = khachHang.HoVaTen,
+                SDT = khachHang.SDT,
+                Email = khachHang.Email,
+                NgaySinh = khachHang.NgaySinh,
+                NgayDangKy = khachHang.NgayDangKy
+            };
+
+            return View(model);
+        }
 
         // ─── Tạo chuyến đi ───────────────────────────────────────────────────
         [HttpGet]

@@ -1,5 +1,86 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - PJGoFast</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/PJGoFast.styles.css" asp-append-version="true" />
+</head>
+<body class="bg-light">
+    <header class="d-none d-md-block">
+        <nav class="navbar navbar-expand-sm navbar-light bg-white border-bottom box-shadow mb-3">
+            <div class="container-fluid">
+                <a class="navbar-brand fw-bold d-flex align-items-center gap-2" asp-controller="Home" asp-action="Index">
+                    <img src="~/images/logo.png" alt="GoFast Logo" height="32" onerror="this.style.display='none'" />
+                    <span>GoFast</span>
+                </a>
+
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarDesktop"
+                        aria-controls="navbarDesktop" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="navbarDesktop">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">Trang chủ</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="History">Lịch sử</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Account">Tài khoản</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <header class="d-md-none sticky-top bg-white border-bottom">
+        <div class="container-fluid py-2 d-flex align-items-center justify-content-between">
+            <a class="text-decoration-none fw-bold text-dark d-flex align-items-center gap-2" asp-controller="Home" asp-action="Index">
+                <img src="~/images/logo.png" alt="GoFast Logo" height="28" onerror="this.style.display='none'" />
+                <span>GoFast</span>
+            </a>
+            <a class="btn btn-sm btn-outline-primary" asp-controller="Home" asp-action="taoChuyenDi">Đặt xe</a>
+        </div>
+    </header>
+
+    <div class="container pb-5 pb-md-3">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <nav class="d-md-none fixed-bottom bg-white border-top shadow-sm">
+        <div class="container-fluid py-2">
+            <div class="row text-center g-0">
+                <div class="col-4">
+                    <a asp-controller="Home" asp-action="Index" class="text-decoration-none small d-flex flex-column align-items-center text-dark">
+                        <span>🏠</span><span>Trang chủ</span>
+                    </a>
+                </div>
+                <div class="col-4">
+                    <a asp-controller="Home" asp-action="History" class="text-decoration-none small d-flex flex-column align-items-center text-dark">
+                        <span>🧾</span><span>Lịch sử</span>
+                    </a>
+                </div>
+                <div class="col-4">
+                    <a asp-controller="Home" asp-action="Account" class="text-decoration-none small d-flex flex-column align-items-center text-dark">
+                        <span>👤</span><span>Tài khoản</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <footer class="d-none d-md-block border-top footer text-muted">
+        <div class="container">
+            &copy; 2026 - PJGoFast - <a asp-controller="Home" asp-action="Privacy">Privacy</a>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
