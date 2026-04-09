@@ -9,6 +9,8 @@ namespace PJGoFast.Services.Interfaces
 
         ChuyenDi? LayChuyenDiTheoId(string id);
 
+        List<ChuyenDi> LayLichSuChuyenDiTheoKhachHang(string idKhachHang);
+
         void CapNhatGiaTamTinh(string id, decimal gia);
     }
 }
