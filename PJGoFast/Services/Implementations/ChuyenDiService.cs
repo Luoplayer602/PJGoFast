@@ -57,6 +57,14 @@ namespace PJGoFast.Services.Implementations
                 .FirstOrDefault(c => c.IdChuyenDi == id);
         }
 
+        public List<ChuyenDi> LayLichSuChuyenDiTheoKhachHang(string idKhachHang)
+        {
+            return _context.ChuyenDis
+                .Where(c => c.IdKH == idKhachHang)
+                .OrderByDescending(c => c.ThoiGianTao)
+                .ToList();
+        }
+
         /// <summary>Cập nhật giá tạm tính sau khi tính toán từ Goong Distance Matrix.</summary>
         public void CapNhatGiaTamTinh(string id, decimal gia)
         {

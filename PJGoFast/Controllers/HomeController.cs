@@ -4,6 +4,7 @@ using PJGoFast.Models;
 using PJGoFast.Services.Interfaces;
 using PJGoFast.ViewModels;
 using System.Diagnostics;
+using System.Linq;
 using System.Security.Claims;
 using System.Text.Json;
 
@@ -47,6 +48,37 @@ namespace PJGoFast.Controllers
 
         // ─── Index ────────────────────────────────────────────────────────────
         public IActionResult Index() => View();
+
+        // ─── Lịch sử chuyến đi ───────────────────────────────────────────────
+        [HttpGet]
+        public IActionResult History()
+        {
+            var idKhachHang = User.FindFirstValue(ClaimTypes.Name);
+            if (string.IsNullOrWhiteSpace(idKhachHang))
+            {
+                return Challenge();
+            }
+
+            var lichSu = _chuyenDiService.LayLichSuChuyenDiTheoKhachHang(idKhachHang)
+                .Select(cd => new ChuyenDiHistoryItemVM
+                {
+                    IdChuyenDi = cd.IdChuyenDi,
+                    DiemDon = cd.DiemDon,
+                    DiemDen = cd.DiemDen,
+                    LoaiXeYeuCau = cd.LoaiXeYeuCau,
+                    TrangThai = cd.TrangThai,
+                    ThoiGianTao = cd.ThoiGianTao,
+                    ThoiGianDon = cd.ThoiGianDon,
+                    GiaTamTinh = cd.GiaTamTinh
+                })
+                .ToList();
+
+            return View(lichSu);
+        }
+
+        // Giữ tương thích với route cũ bị gõ nhầm "Histoty"
+        [HttpGet]
+        public IActionResult Histoty() => RedirectToAction(nameof(History));
 
         // ─── Tạo chuyến đi ───────────────────────────────────────────────────
         [HttpGet]

@@ -147,6 +147,18 @@ namespace PJGoFast.ViewModels
         public string? GoongApiKey { get; set; }
     }
 
+    public class ChuyenDiHistoryItemVM
+    {
+        public string IdChuyenDi { get; set; }
+        public string DiemDon { get; set; }
+        public string DiemDen { get; set; }
+        public LoaiXe LoaiXeYeuCau { get; set; }
+        public TrangThaiChuyen TrangThai { get; set; }
+        public DateTime ThoiGianTao { get; set; }
+        public DateTime ThoiGianDon { get; set; }
+        public decimal? GiaTamTinh { get; set; }
+    }
+
     public class ThanhToanVM
     {
         public string IdThanhToan { get; set; }
