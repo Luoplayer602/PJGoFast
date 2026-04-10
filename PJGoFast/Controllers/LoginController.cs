@@ -120,6 +120,10 @@ namespace PJGoFast.Controllers
             {
                 return RedirectToAction("Index", "Admin");
             }
+            else if (User.IsInRole("DieuPhoi"))
+            {
+                return RedirectToAction("Index", "DieuPhoi");
+            }
             return View();
         }
 
@@ -148,7 +152,15 @@ namespace PJGoFast.Controllers
             {
                 return Redirect(ReturnUrl);
             }
-            return RedirectToAction("Index", "Admin");
+
+            if (principal.HasClaim(c => c.Type == ClaimTypes.Role && c.Value == "QuanTri"))
+            {
+                return RedirectToAction("Index", "Admin");
+            }
+            else
+            {
+                return RedirectToAction("Index", "DieuPhoi");
+            }    
         }
     }
 }
