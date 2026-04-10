@@ -1,6 +1,335 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+@model AdminManagementIndexVM
+
 @{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Quản lý admin";
 }
-<a href="/Admin/QuanLyAdmin">Quản lý admin</a>
+
+<style>
+    .page-hero {
+        background: linear-gradient(160deg, #1d4ed8 0%, #3b82f6 60%, #60a5fa 100%);
+        color: #fff;
+        border-radius: 28px;
+        padding: 28px 24px;
+        box-shadow: 0 16px 40px rgba(37, 99, 235, .18);
+        margin-bottom: 18px;
+    }
+
+    .page-hero h1 {
+        font-size: clamp(1.5rem, 2vw, 2rem);
+        font-weight: 800;
+        margin-bottom: 8px;
+    }
+
+    .page-hero p {
+        margin: 0;
+        max-width: 680px;
+        color: rgba(255, 255, 255, .86);
+    }
+
+    .hero-actions {
+        margin-top: 18px;
+    }
+
+    .hero-actions .btn {
+        border-radius: 999px;
+        padding: 10px 18px;
+        font-weight: 700;
+    }
+
+    .summary-bar {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+
+    .sum-chip {
+        background: #fff;
+        border-radius: 18px;
+        padding: 16px 14px;
+        text-align: center;
+        box-shadow: 0 8px 20px rgba(15, 23, 42, .05);
+    }
+
+    .sum-chip .sv {
+        font-size: 1.45rem;
+        font-weight: 800;
+        color: #111827;
+        line-height: 1;
+    }
+
+    .sum-chip .sl {
+        color: #6b7280;
+        font-size: .76rem;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        margin-top: 6px;
+        font-weight: 700;
+    }
+
+    .list-wrap {
+        background: #fff;
+        border-radius: 24px;
+        padding: 18px;
+        box-shadow: 0 10px 28px rgba(15, 23, 42, .06);
+    }
+
+    .list-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
+    }
+
+    .list-head h2 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 800;
+    }
+
+    .list-head p {
+        margin: 4px 0 0;
+        color: #6b7280;
+        font-size: .9rem;
+    }
+
+    .desktop-header {
+        display: grid;
+        grid-template-columns: 1.15fr 1.3fr 1.05fr 0.9fr 0.85fr 0.7fr;
+        gap: 12px;
+        padding: 0 18px 10px;
+        color: #94a3b8;
+        font-size: .73rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+    }
+
+    .admin-card {
+        display: block;
+        text-decoration: none;
+        color: inherit;
+        background: #fff;
+        border: 1px solid #eef2f7;
+        border-radius: 20px;
+        padding: 18px;
+        margin-bottom: 12px;
+        transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+        box-shadow: 0 1px 8px rgba(15, 23, 42, .04);
+    }
+
+    .admin-card:hover {
+        transform: translateY(-2px);
+        border-color: #bfdbfe;
+        box-shadow: 0 16px 32px rgba(37, 99, 235, .10);
+        color: inherit;
+    }
+
+    .admin-grid {
+        display: grid;
+        grid-template-columns: 1.15fr 1.3fr 1.05fr 0.9fr 0.85fr 0.7fr;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .admin-field .label {
+        display: none;
+        font-size: .72rem;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        margin-bottom: 4px;
+        font-weight: 700;
+    }
+
+    .admin-field .value {
+        font-size: .94rem;
+        font-weight: 700;
+        color: #111827;
+        line-height: 1.35;
+    }
+
+    .admin-field .value.mono {
+        font-family: Consolas, monospace;
+        font-size: .86rem;
+    }
+
+    .role-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        padding: 6px 10px;
+        font-size: .78rem;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .role-pill.quan-tri {
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
+
+    .role-pill.dieu-phoi {
+        background: #ecfdf5;
+        color: #047857;
+    }
+
+    .detail-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        border-radius: 999px;
+        padding: 8px 12px;
+        background: #eff6ff;
+        color: #2563eb;
+        font-size: .82rem;
+        font-weight: 800;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 56px 20px 44px;
+        color: #94a3b8;
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        display: block;
+        margin-bottom: 14px;
+        color: #cbd5e1;
+    }
+
+    .empty-state .title {
+        color: #334155;
+        font-size: 1.05rem;
+        font-weight: 800;
+        margin-bottom: 6px;
+    }
+
+    @@media (max-width: 992px) {
+        .desktop-header,
+        .admin-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .summary-bar {
+            grid-template-columns: 1fr;
+        }
+
+        .desktop-header {
+            display: none;
+        }
+
+        .admin-grid {
+            grid-template-columns: 1fr;
+            gap: 14px;
+        }
+
+        .admin-field .label {
+            display: block;
+        }
+
+        .detail-link {
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="page-hero">
+    <h1>Quản lý tài khoản admin</h1>
+    <p>Danh sách này hiển thị đầy đủ thông tin cơ bản của từng admin. Chọn một dòng hoặc nút chi tiết để xem, sửa hoặc xóa.</p>
+    <div class="hero-actions">
+        <a asp-action="Create" class="btn btn-light text-primary">
+            <i class="bi bi-person-plus-fill me-1"></i> Thêm admin mới
+        </a>
+    </div>
+</div>
+
+<div class="summary-bar">
+    <div class="sum-chip">
+        <div class="sv">@Model.TongSoAdmin</div>
+        <div class="sl">Tổng admin</div>
+    </div>
+    <div class="sum-chip">
+        <div class="sv text-primary">@Model.SoQuanTri</div>
+        <div class="sl">Quản trị</div>
+    </div>
+    <div class="sum-chip">
+        <div class="sv text-success">@Model.SoDieuPhoi</div>
+        <div class="sl">Điều phối</div>
+    </div>
+</div>
+
+<div class="list-wrap">
+    <div class="list-head">
+        <div>
+            <h2>Danh sách admin</h2>
+            <p>Hiển thị các trường: Id, tên, số điện thoại, ngày sinh và vai trò.</p>
+        </div>
+    </div>
+
+    @if (!Model.Admins.Any())
+    {
+        <div class="empty-state">
+            <i class="bi bi-people"></i>
+            <div class="title">Chưa có admin nào ngoài dữ liệu mặc định</div>
+            <div>Hãy tạo thêm admin để bắt đầu phân quyền vận hành.</div>
+        </div>
+    }
+    else
+    {
+        <div class="desktop-header">
+            <span>Id</span>
+            <span>Tên</span>
+            <span>SĐT</span>
+            <span>Ngày sinh</span>
+            <span>Vai trò</span>
+            <span></span>
+        </div>
+
+        @foreach (var admin in Model.Admins)
+        {
+            var roleClass = admin.VaiTro == AdminRoleOptions.QuanTri ? "quan-tri" : "dieu-phoi";
+            <a asp-action="Details" asp-route-id="@admin.IdAdmin" class="admin-card">
+                <div class="admin-grid">
+                    <div class="admin-field">
+                        <div class="label">Id</div>
+                        <div class="value mono">@admin.IdAdmin</div>
+                    </div>
+                    <div class="admin-field">
+                        <div class="label">Tên</div>
+                        <div class="value">@admin.HoVaTen</div>
+                    </div>
+                    <div class="admin-field">
+                        <div class="label">SĐT</div>
+                        <div class="value">@admin.SDT</div>
+                    </div>
+                    <div class="admin-field">
+                        <div class="label">Ngày sinh</div>
+                        <div class="value">@(admin.NgaySinh?.ToString("dd/MM/yyyy") ?? "Chưa cập nhật")</div>
+                    </div>
+                    <div class="admin-field">
+                        <div class="label">Vai trò</div>
+                        <div class="value">
+                            <span class="role-pill @roleClass">@admin.VaiTro</span>
+                        </div>
+                    </div>
+                    <div class="admin-field">
+                        <div class="label">Chi tiết</div>
+                        <div class="value">
+                            <span class="detail-link">
+                                Chi tiết <i class="bi bi-chevron-right"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        }
+    }
+</div>

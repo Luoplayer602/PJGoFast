@@ -116,7 +116,7 @@ namespace PJGoFast.Controllers
         [HttpGet]
         public IActionResult Admin()
         {
-            if (User.IsInRole("Admin"))
+            if (User.IsInRole("QuanTri"))
             {
                 return RedirectToAction("Index", "Admin");
             }
