@@ -85,7 +85,7 @@ namespace PJGoFast.Services.Implementations
             return principal; // Đăng nhập thành công
         }
 
-        public Models.Entities.KhachHang GetKhachHangById(string idKH)
+        public Models.Entities.KhachHang LayThongTinKhachHang(string idKH)
         {
             return _context.KhachHangs.FirstOrDefault(kh => kh.IdKH == idKH);
 

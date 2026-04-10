@@ -11,7 +11,8 @@ namespace PJGoFast.Models.Enums
         DA_DON = 4,
         DANG_DI_CHUYEN = 5,
         HOAN_TAT = 6,
-        HUY = 7
+        HUY = 7,
+        CHO = 8
     }
 
     public enum TrangThaiOnline

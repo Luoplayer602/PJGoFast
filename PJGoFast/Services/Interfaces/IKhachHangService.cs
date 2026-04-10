@@ -13,6 +13,6 @@ namespace PJGoFast.Services.Interfaces
 
         
 
-        Models.Entities.KhachHang GetKhachHangById(string idKH);
+        Models.Entities.KhachHang LayThongTinKhachHang(string idKH);
     }
 }

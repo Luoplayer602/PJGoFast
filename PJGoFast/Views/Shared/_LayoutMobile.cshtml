@@ -1,5 +1,253 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
-}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>@ViewData["Title"] - GoFast</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+    <style>
+        :root {
+            --nav-h:    60px;   /* chiều cao bottom navbar */
+            --header-h: 56px;   /* chiều cao header */
+            --clr-primary:   #2563eb;
+            --clr-primary-l: #eff6ff;
+            --clr-bg:        #f4f6fb;
+            --clr-surface:   #ffffff;
+            --clr-muted:     #9ca3af;
+            --clr-text:      #111827;
+            --safe-bottom:   env(safe-area-inset-bottom, 0px);
+        }
+
+        * { box-sizing: border-box; }
+        html, body {
+            height: 100%;
+            background: var(--clr-bg);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* ── Header ─────────────────────────────────────────── */
+        .mobile-header {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: var(--header-h);
+            background: var(--clr-surface);
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            padding: 0 16px;
+            box-shadow: 0 1px 8px rgba(0,0,0,.06);
+        }
+
+        .mobile-header .logo-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 800;
+            font-size: 1.15rem;
+            color: var(--clr-primary);
+            letter-spacing: -.01em;
+            text-decoration: none;
+        }
+        .mobile-header .logo-wrap img {
+            height: 28px;
+            object-fit: contain;
+        }
+
+        .mobile-header .page-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--clr-text);
+            position: absolute;
+            left: 50%; transform: translateX(-50%);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 60%;
+        }
+
+        .mobile-header .header-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* ── Main content: pushed below header, above nav ─── */
+        .mobile-body {
+            padding-top: var(--header-h);
+            padding-bottom: calc(var(--nav-h) + var(--safe-bottom) + 8px);
+            min-height: 100%;
+        }
+
+        /* ── Bottom Navigation ─────────────────────────────── */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            height: calc(var(--nav-h) + var(--safe-bottom));
+            background: var(--clr-surface);
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            align-items: stretch;
+            z-index: 100;
+            padding-bottom: var(--safe-bottom);
+            box-shadow: 0 -2px 16px rgba(0,0,0,.06);
+        }
+
+        .nav-tab {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            text-decoration: none;
+            color: var(--clr-muted);
+            font-size: .68rem;
+            font-weight: 600;
+            transition: color .15s;
+            position: relative;
+            padding: 6px 0;
+        }
+
+        .nav-tab i {
+            font-size: 1.35rem;
+            line-height: 1;
+            transition: transform .2s cubic-bezier(.34,1.56,.64,1);
+        }
+
+        .nav-tab.active {
+            color: var(--clr-primary);
+        }
+
+        .nav-tab.active i {
+            transform: scale(1.15) translateY(-1px);
+        }
+
+        /* Pill indicator trên icon active */
+        .nav-tab.active::before {
+            content: '';
+            position: absolute;
+            top: 5px;
+            width: 32px; height: 3px;
+            background: var(--clr-primary);
+            border-radius: 0 0 4px 4px;
+        }
+
+        /* ── Toast / Alert chung ───────────────────────────── */
+        .toast-container-mobile {
+            position: fixed;
+            top: calc(var(--header-h) + 8px);
+            left: 12px; right: 12px;
+            z-index: 200;
+            pointer-events: none;
+        }
+        .toast-container-mobile .alert {
+            pointer-events: all;
+            border-radius: 14px;
+            font-size: .88rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,.12);
+            animation: toastIn .3s ease both;
+        }
+        @@keyframes toastIn {
+            from { opacity: 0; transform: translateY(-12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ── Header ── -->
+    <header class="mobile-header">
+        <a class="logo-wrap" asp-controller="Home" asp-action="Index">
+            <img src="~/images/logo.png" alt="GoFast" onerror="this.style.display='none'" />
+            GoFast
+        </a>
+        <span class="page-title">@(ViewData["Title"]?.ToString() ?? "GoFast")</span>
+        <div class="header-right">
+            @if (User.Identity != null && User.Identity.IsAuthenticated)
+            {
+                <a asp-controller="Home" asp-action="Account" class="d-flex align-items-center">
+                    <img src="@(User.FindFirst("Avatar")?.Value ?? "/images/default-avatar.png")"
+                         width="30" height="30"
+                         class="rounded-circle border"
+                         onerror="this.src='/images/default-avatar.png'"
+                         alt="Avatar" />
+                </a>
+            }
+        </div>
+    </header>
+
+    <!-- ── Toast messages ── -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="toast-container-mobile">
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="toast-container-mobile">
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Error"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </div>
+    }
+
+    <!-- ── Body ── -->
+    <div class="mobile-body">
+        <main role="main">
+            @RenderBody()
+        </main>
+    </div>
+
+    <!-- ── Bottom nav ── -->
+    @{
+        var currentAction     = ViewContext.RouteData.Values["action"]?.ToString()     ?? "";
+        var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+        bool isHome    = currentController == "Home" && currentAction == "Index";
+        bool isHistory = currentController == "Home" && currentAction == "History";
+        bool isAccount = currentController == "Home" && currentAction == "Account";
+    }
+    <nav class="bottom-nav">
+        <a asp-controller="Home" asp-action="Index"
+           class="nav-tab @(isHome ? "active" : "")">
+            <i class="bi @(isHome ? "bi-house-fill" : "bi-house")"></i>
+            <span>Trang chủ</span>
+        </a>
+        <a asp-controller="Home" asp-action="History"
+           class="nav-tab @(isHistory ? "active" : "")">
+            <i class="bi @(isHistory ? "bi-clock-history" : "bi-clock")"></i>
+            <span>Lịch sử</span>
+        </a>
+        <a asp-controller="Home" asp-action="Account"
+           class="nav-tab @(isAccount ? "active" : "")">
+            <i class="bi @(isAccount ? "bi-person-fill" : "bi-person")"></i>
+            <span>Tài khoản</span>
+        </a>
+    </nav>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+
+    <!-- Auto-dismiss toast sau 4 giây -->
+    <script>
+        setTimeout(() => {
+            document.querySelectorAll('.toast-container-mobile .alert').forEach(el => {
+                el.classList.remove('show');
+                setTimeout(() => el.remove(), 300);
+            });
+        }, 4000);
+    </script>
+</body>
+</html>

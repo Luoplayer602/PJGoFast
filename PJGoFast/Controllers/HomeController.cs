@@ -7,9 +7,6 @@ using System.Diagnostics;
 using System.Security.Claims;
 using System.Text.Json;
 
-// NOTE: Đảm bảo đã thêm dòng sau vào Program.cs:
-//   builder.Services.AddHttpClient();
-
 namespace PJGoFast.Controllers
 {
     [Authorize(Roles = "KhachHang")]
@@ -24,14 +21,13 @@ namespace PJGoFast.Controllers
         private const string GOONG_MAP_KEY = "DCZhv9n0uqtUA9sxXclNcEXFRlGdvUIY7LVngNWp";
 
         // ===== BẢNG GIÁ CƯỚC (VND/km) — CHỈNH SỬA TẠI ĐÂY NẾU CẦN =====
-        // Format: { "TênLoaiXe", (GiáMỗiKm, GiáTốiThiểu) }
         private static readonly Dictionary<string, (decimal PerKm, decimal ToiThieu)> _bangGia = new()
         {
-            { "XeMay",   (  8_000m,  15_000m) },   // Xe máy  :  8.000 đ/km, tối thiểu  15.000 đ
-            { "Sedan",   ( 12_000m,  30_000m) },   // Sedan   : 12.000 đ/km, tối thiểu  30.000 đ
-            { "SUV",     ( 15_000m,  40_000m) },   // SUV     : 15.000 đ/km, tối thiểu  40.000 đ
-            { "BayCho",  ( 18_000m,  50_000m) },   // 7 chỗ  : 18.000 đ/km, tối thiểu  50.000 đ
-            { "TaiNho",  ( 22_000m,  60_000m) },   // Tải nhỏ: 22.000 đ/km, tối thiểu  60.000 đ
+            { "XeMay",  (  8_000m,  15_000m) },
+            { "Sedan",  ( 12_000m,  30_000m) },
+            { "SUV",    ( 15_000m,  40_000m) },
+            { "BayCho", ( 18_000m,  50_000m) },
+            { "TaiNho", ( 22_000m,  60_000m) },
         };
         // ====================================================================
 
@@ -89,43 +85,88 @@ namespace PJGoFast.Controllers
             return View("taoChuyenDi", model);
         }
 
-        // ─── Báo giá (basic view) ─────────────────────────────────────────────
+        // ─── Báo giá (basic) ─────────────────────────────────────────────────
         [HttpGet]
         public async Task<IActionResult> baoGia(string IdChuyenDi)
         {
             var vm = await BuildBaoGiaVMAsync(IdChuyenDi);
             if (vm == null) return NotFound();
-
-            // Lưu giá tạm tính vào DB
             _chuyenDiService.CapNhatGiaTamTinh(IdChuyenDi, vm.GiaTamTinh);
-
             return View(vm);
         }
 
-        // ─── Báo giá (premium map view) ───────────────────────────────────────
+        // ─── Báo giá (map) ───────────────────────────────────────────────────
         [HttpGet]
         public async Task<IActionResult> baoGiaMap(string IdChuyenDi)
         {
             var vm = await BuildBaoGiaVMAsync(IdChuyenDi);
             if (vm == null) return NotFound();
-
             vm.GoongMapKey = GOONG_MAP_KEY;
             vm.GoongApiKey = GOONG_API_KEY;
-
             return View(vm);
         }
 
-        // ─── Helpers ─────────────────────────────────────────────────────────
+        // ─── Xóa hẳn khỏi DB (từ baoGia / baoGiaMap) ────────────────────────
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult XoaChuyenDi(string IdChuyenDi)
+        {
+            var idKH = User.FindFirstValue(ClaimTypes.Name);
+            _chuyenDiService.XoaChuyenDi(IdChuyenDi, idKH);
+            return RedirectToAction(nameof(Index));
+        }
 
-        /// <summary>Dựng BaoGiaVM: geocode 2 địa chỉ → gọi distance matrix → tính giá.</summary>
+        // ─── Lịch sử ─────────────────────────────────────────────────────────
+        [HttpGet]
+        public IActionResult History()
+        {
+            var idKH = User.FindFirstValue(ClaimTypes.Name);
+            var list = _chuyenDiService.LayDanhSachChuyenDiCuaKH(idKH);
+            return View(list);
+        }
+
+        // ─── Chi tiết chuyến đi ───────────────────────────────────────────────
+        [HttpGet]
+        public IActionResult ChiTietChuyenDi(string IdChuyenDi)
+        {
+            var idKH     = User.FindFirstValue(ClaimTypes.Name);
+            var chuyenDi = _chuyenDiService.LayChuyenDiTheoId(IdChuyenDi);
+            if (chuyenDi == null || chuyenDi.IdKH != idKH) return NotFound();
+            return View(chuyenDi);
+        }
+
+        // ─── Hủy chuyến (chuyển trạng thái → HUY) ────────────────────────────
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult HuyChuyenDi(string IdChuyenDi)
+        {
+            var idKH = User.FindFirstValue(ClaimTypes.Name);
+            var ok   = _chuyenDiService.HuyChuyenDi(IdChuyenDi, idKH);
+
+            TempData[ok ? "Success" : "Error"] = ok
+                ? "Chuyến đi đã được hủy thành công."
+                : "Không thể hủy chuyến đi này.";
+
+            return RedirectToAction(nameof(History));
+        }
+
+        // ─── Tài khoản ───────────────────────────────────────────────────────
+        [HttpGet]
+        public IActionResult Account()
+        {
+            var idKH = User.FindFirstValue(ClaimTypes.Name);
+            var kh   = _khachHangService.LayThongTinKhachHang(idKH);
+            if (kh == null) return NotFound();
+            return View(kh);
+        }
+
+        // ─── Helpers ─────────────────────────────────────────────────────────
         private async Task<BaoGiaVM?> BuildBaoGiaVMAsync(string idChuyenDi)
         {
             var chuyenDi = _chuyenDiService.LayChuyenDiTheoId(idChuyenDi);
             if (chuyenDi == null) return null;
 
-            var client = _httpClientFactory.CreateClient();
-
-            // Geocode song song để tiết kiệm thời gian
+            var client  = _httpClientFactory.CreateClient();
             var taskDon = GeocodeAsync(client, chuyenDi.DiemDon);
             var taskDen = GeocodeAsync(client, chuyenDi.DiemDen);
             await Task.WhenAll(taskDon, taskDen);
@@ -134,59 +175,50 @@ namespace PJGoFast.Controllers
             var (denLat, denLng) = taskDen.Result;
 
             double khoangCachKm = 0;
-            int thoiGianPhut = 0;
+            int    thoiGianPhut = 0;
 
             if (donLat != 0 && denLat != 0)
             {
-                // Gọi Distance Matrix API
                 var dmUrl = $"https://rsapi.goong.io/v2/distancematrix" +
                             $"?origins={donLat.ToString(System.Globalization.CultureInfo.InvariantCulture)}" +
                             $",{donLng.ToString(System.Globalization.CultureInfo.InvariantCulture)}" +
                             $"&destinations={denLat.ToString(System.Globalization.CultureInfo.InvariantCulture)}" +
                             $",{denLng.ToString(System.Globalization.CultureInfo.InvariantCulture)}" +
                             $"&vehicle=car&api_key={GOONG_API_KEY}";
-
                 try
                 {
-                    var dmJson = await client.GetStringAsync(dmUrl);
-                    using var dmDoc = JsonDocument.Parse(dmJson);
-                    var element = dmDoc.RootElement
-                        .GetProperty("rows")[0]
-                        .GetProperty("elements")[0];
-
-                    if (element.GetProperty("status").GetString() == "OK")
+                    var dmJson  = await client.GetStringAsync(dmUrl);
+                    using var doc = JsonDocument.Parse(dmJson);
+                    var el = doc.RootElement.GetProperty("rows")[0].GetProperty("elements")[0];
+                    if (el.GetProperty("status").GetString() == "OK")
                     {
-                        int meters  = element.GetProperty("distance").GetProperty("value").GetInt32();
-                        int seconds = element.GetProperty("duration").GetProperty("value").GetInt32();
-                        khoangCachKm = Math.Round(meters  / 1000.0, 1);
-                        thoiGianPhut = (int)Math.Ceiling(seconds / 60.0);
+                        khoangCachKm = Math.Round(el.GetProperty("distance").GetProperty("value").GetInt32() / 1000.0, 1);
+                        thoiGianPhut = (int)Math.Ceiling(el.GetProperty("duration").GetProperty("value").GetInt32() / 60.0);
                     }
                 }
-                catch { /* Giữ mặc định 0 nếu API lỗi */ }
+                catch { }
             }
 
-            var (giaTamTinh, giaPerKm, apDungMin) = TinhGia(
-                chuyenDi.LoaiXeYeuCau.ToString(), (decimal)khoangCachKm);
+            var (giaTamTinh, giaPerKm, apDungMin) = TinhGia(chuyenDi.LoaiXeYeuCau.ToString(), (decimal)khoangCachKm);
 
             return new BaoGiaVM
             {
-                IdChuyenDi       = idChuyenDi,
-                DiemDon          = chuyenDi.DiemDon,
-                DiemDen          = chuyenDi.DiemDen,
-                ThoiGianDon      = chuyenDi.ThoiGianDon,
-                LoaiXeYeuCau     = chuyenDi.LoaiXeYeuCau,
-                GhiChu           = chuyenDi.GhiChu,
-                KhoangCachKm     = khoangCachKm,
+                IdChuyenDi         = idChuyenDi,
+                DiemDon            = chuyenDi.DiemDon,
+                DiemDen            = chuyenDi.DiemDen,
+                ThoiGianDon        = chuyenDi.ThoiGianDon,
+                LoaiXeYeuCau       = chuyenDi.LoaiXeYeuCau,
+                GhiChu             = chuyenDi.GhiChu,
+                KhoangCachKm       = khoangCachKm,
                 ThoiGianDuTinhPhut = thoiGianPhut,
-                GiaTamTinh       = giaTamTinh,
-                GiaPerKm         = giaPerKm,
-                ApDungGiaToiThieu = apDungMin,
+                GiaTamTinh         = giaTamTinh,
+                GiaPerKm           = giaPerKm,
+                ApDungGiaToiThieu  = apDungMin,
                 DonLat = donLat, DonLng = donLng,
                 DenLat = denLat, DenLng = denLng,
             };
         }
 
-        /// <summary>Geocode địa chỉ văn bản → (lat, lng). Trả về (0,0) nếu thất bại.</summary>
         private async Task<(double lat, double lng)> GeocodeAsync(HttpClient client, string address)
         {
             try
@@ -194,27 +226,21 @@ namespace PJGoFast.Controllers
                 var url  = $"https://rsapi.goong.io/v2/geocode?address={Uri.EscapeDataString(address)}&api_key={GOONG_API_KEY}";
                 var json = await client.GetStringAsync(url);
                 using var doc = JsonDocument.Parse(json);
-                var loc = doc.RootElement
-                    .GetProperty("results")[0]
-                    .GetProperty("geometry")
-                    .GetProperty("location");
+                var loc = doc.RootElement.GetProperty("results")[0]
+                    .GetProperty("geometry").GetProperty("location");
                 return (loc.GetProperty("lat").GetDouble(), loc.GetProperty("lng").GetDouble());
             }
             catch { return (0, 0); }
         }
 
-        /// <summary>Tính giá tạm tính theo loại xe và số km.</summary>
         private static (decimal gia, decimal perKm, bool apDungMin) TinhGia(string loaiXe, decimal km)
         {
-            if (!_bangGia.TryGetValue(loaiXe, out var b))
-                b = (12_000m, 30_000m); // fallback: Sedan
-
-            var rawGia = Math.Round(km * b.PerKm, 0);
+            if (!_bangGia.TryGetValue(loaiXe, out var b)) b = (12_000m, 30_000m);
+            var rawGia  = Math.Round(km * b.PerKm, 0);
             bool useMin = rawGia < b.ToiThieu;
             return (useMin ? b.ToiThieu : rawGia, b.PerKm, useMin);
         }
 
-        // ─── Misc ─────────────────────────────────────────────────────────────
         public IActionResult Privacy() => View();
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

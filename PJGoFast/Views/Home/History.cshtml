@@ -1,0 +1,268 @@
+@using PJGoFast.Models.Entities
+@using PJGoFast.Models.Enums
+@model List<ChuyenDi>
+
+@{
+    ViewData["Title"] = "Lịch Sử Chuyến Đi";
+    var userAgent = Context.Request.Headers["User-Agent"].ToString().ToLower();
+    
+    // Nhận diện các từ khóa phổ biến của thiết bị di động
+    bool isMobile = userAgent.Contains("mobi") || 
+                    userAgent.Contains("android") || 
+                    userAgent.Contains("iphone");
+
+    // Chọn layout tương ứng
+    if (isMobile)
+    {
+        Layout = "_LayoutMobile"; // Dùng cho điện thoại
+    }
+    else
+    {
+        Layout = "_Layout";       // Dùng cho máy tính (Desktop)
+    }
+}
+
+<style>
+    .history-page { padding: 16px; }
+
+    /* ── Summary bar ── */
+    .summary-bar {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+    .sum-chip {
+        flex: 1;
+        background: #fff;
+        border-radius: 14px;
+        padding: 12px 10px;
+        text-align: center;
+        box-shadow: 0 1px 8px rgba(0,0,0,.06);
+    }
+    .sum-chip .sv { font-size: 1.25rem; font-weight: 800; color: #111; }
+    .sum-chip .sl { font-size: .68rem; color: #6b7280; margin-top: 1px; }
+
+    /* ── Trip card ── */
+    .trip-card {
+        background: #fff;
+        border-radius: 16px;
+        padding: 14px 16px;
+        margin-bottom: 12px;
+        box-shadow: 0 1px 8px rgba(0,0,0,.06);
+        text-decoration: none;
+        color: inherit;
+        display: block;
+        transition: box-shadow .15s, transform .1s;
+        animation: fadeUp .3s ease both;
+    }
+    .trip-card:hover { box-shadow: 0 4px 20px rgba(37,99,235,.12); transform: translateY(-1px); color: inherit; }
+
+    @@keyframes fadeUp {
+        from { opacity: 0; transform: translateY(14px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .trip-card-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+    }
+
+    .trip-date { font-size: .75rem; color: #9ca3af; }
+
+    /* Badge trạng thái */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: .72rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+    .status-MOI           { background: #eff6ff; color: #2563eb; }
+    .status-DA_PHAN_CONG  { background: #f0fdf4; color: #16a34a; }
+    .status-DA_NHAN       { background: #f0fdf4; color: #16a34a; }
+    .status-DANG_DON      { background: #fff7ed; color: #ea580c; }
+    .status-DA_DON        { background: #fff7ed; color: #ea580c; }
+    .status-DANG_DI_CHUYEN{ background: #fdf4ff; color: #9333ea; }
+    .status-HOAN_TAT      { background: #f0fdf4; color: #15803d; }
+    .status-HUY           { background: #fef2f2; color: #dc2626; }
+
+    /* Route */
+    .trip-route {
+        display: flex;
+        align-items: stretch;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .route-spine {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 3px 0;
+        gap: 3px;
+        flex-shrink: 0;
+    }
+    .route-spine .dot-top  { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; flex-shrink: 0; }
+    .route-spine .dot-bot  { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; flex-shrink: 0; margin-top: auto; }
+    .route-spine .line     { flex: 1; width: 2px; background: linear-gradient(to bottom, #22c55e, #ef4444); border-radius: 2px; min-height: 16px; }
+    .route-text { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; gap: 6px; }
+    .route-addr { font-size: .84rem; font-weight: 600; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .route-label { font-size: .68rem; color: #9ca3af; }
+
+    .trip-card-foot {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: .8rem;
+        color: #6b7280;
+        border-top: 1px solid #f3f4f6;
+        padding-top: 8px;
+        margin-top: 4px;
+    }
+    .trip-price { font-size: .92rem; font-weight: 800; color: #1d4ed8; }
+
+    /* ── Empty state ── */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #9ca3af;
+    }
+    .empty-state i { font-size: 3rem; color: #d1d5db; display: block; margin-bottom: 16px; }
+    .empty-state .title { font-weight: 700; color: #374151; font-size: 1rem; margin-bottom: 6px; }
+
+    /* ── CTA button ── */
+    .btn-new-trip {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        padding: 14px;
+        border-radius: 14px;
+        background: #2563eb;
+        color: #fff;
+        font-weight: 700;
+        font-size: .92rem;
+        text-decoration: none;
+        margin-top: 4px;
+        transition: filter .15s;
+    }
+    .btn-new-trip:hover { filter: brightness(1.08); color: #fff; }
+</style>
+
+<div class="history-page">
+
+    @{
+        var total   = Model.Count;
+        var hoanTat = Model.Count(c => c.TrangThai == TrangThaiChuyen.HOAN_TAT);
+        var dangDi  = Model.Count(c => c.TrangThai != TrangThaiChuyen.HOAN_TAT && c.TrangThai != TrangThaiChuyen.HUY);
+    }
+
+    <!-- Summary -->
+    <div class="summary-bar">
+        <div class="sum-chip">
+            <div class="sv">@total</div>
+            <div class="sl">Tổng chuyến</div>
+        </div>
+        <div class="sum-chip">
+            <div class="sv text-success">@hoanTat</div>
+            <div class="sl">Hoàn tất</div>
+        </div>
+        <div class="sum-chip">
+            <div class="sv" style="color:#ea580c;">@dangDi</div>
+            <div class="sl">Đang xử lý</div>
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="empty-state">
+            <i class="bi bi-clock-history"></i>
+            <div class="title">Chưa có chuyến đi nào</div>
+            <div style="font-size:.84rem;">Hãy đặt chuyến đi đầu tiên của bạn!</div>
+        </div>
+    }
+    else
+    {
+        @foreach (var cd in Model)
+        {
+            var statusClass = "status-" + cd.TrangThai.ToString();
+            var statusText  = cd.TrangThai switch
+            {
+                TrangThaiChuyen.MOI            => "Chờ phân công",
+                TrangThaiChuyen.DA_PHAN_CONG   => "Đã phân công",
+                TrangThaiChuyen.DA_NHAN        => "Tài xế đã nhận",
+                TrangThaiChuyen.DANG_DON       => "Đang đến đón",
+                TrangThaiChuyen.DA_DON         => "Đã đón khách",
+                TrangThaiChuyen.DANG_DI_CHUYEN => "Đang di chuyển",
+                TrangThaiChuyen.HOAN_TAT       => "Hoàn tất",
+                TrangThaiChuyen.HUY            => "Đã hủy",
+                _                              => cd.TrangThai.ToString()
+            };
+            var statusIcon = cd.TrangThai switch
+            {
+                TrangThaiChuyen.MOI            => "bi-hourglass-split",
+                TrangThaiChuyen.DA_PHAN_CONG   => "bi-person-check",
+                TrangThaiChuyen.DA_NHAN        => "bi-check-circle",
+                TrangThaiChuyen.DANG_DON       => "bi-car-front",
+                TrangThaiChuyen.DA_DON         => "bi-person-check-fill",
+                TrangThaiChuyen.DANG_DI_CHUYEN => "bi-speedometer2",
+                TrangThaiChuyen.HOAN_TAT       => "bi-check-circle-fill",
+                TrangThaiChuyen.HUY            => "bi-x-circle-fill",
+                _                              => "bi-circle"
+            };
+
+            <a class="trip-card" asp-action="ChiTietChuyenDi" asp-controller="Home"
+               asp-route-IdChuyenDi="@cd.IdChuyenDi">
+
+                <div class="trip-card-head">
+                    <span class="trip-date">
+                        <i class="bi bi-clock me-1"></i>@cd.ThoiGianTao.ToString("HH:mm dd/MM/yyyy")
+                    </span>
+                    <span class="status-badge @statusClass">
+                        <i class="bi @statusIcon"></i>@statusText
+                    </span>
+                </div>
+
+                <div class="trip-route">
+                    <div class="route-spine">
+                        <div class="dot-top"></div>
+                        <div class="line"></div>
+                        <div class="dot-bot"></div>
+                    </div>
+                    <div class="route-text">
+                        <div>
+                            <div class="route-label">Điểm đón</div>
+                            <div class="route-addr">@cd.DiemDon</div>
+                        </div>
+                        <div>
+                            <div class="route-label">Điểm đến</div>
+                            <div class="route-addr">@cd.DiemDen</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="trip-card-foot">
+                    <span>
+                        <i class="bi bi-calendar-event me-1"></i>
+                        Đón @cd.ThoiGianDon.ToString("HH:mm dd/MM")
+                    </span>
+                    <span class="trip-price">
+                        @(cd.GiaTamTinh > 0 ? cd.GiaTamTinh.Value.ToString("N0") + " đ" : "—")
+                    </span>
+                </div>
+
+            </a>
+        }
+    }
+
+    <!-- Nút tạo chuyến mới -->
+    <a asp-action="taoChuyenDi" asp-controller="Home" class="btn-new-trip mt-3">
+        <i class="bi bi-plus-circle-fill"></i> Tạo chuyến đi mới
+    </a>
+
+</div>

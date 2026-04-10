@@ -4,6 +4,22 @@
 
 @{
     ViewData["Title"] = "Tạo Chuyến Đi Mới";
+    var userAgent = Context.Request.Headers["User-Agent"].ToString().ToLower();
+    
+    // Nhận diện các từ khóa phổ biến của thiết bị di động
+    bool isMobile = userAgent.Contains("mobi") ||
+                    userAgent.Contains("android") ||
+                    userAgent.Contains("iphone");
+
+    // Chọn layout tương ứng
+    if (isMobile)
+    {
+        Layout = "_LayoutMobile"; // Dùng cho điện thoại
+    }
+    else
+    {
+        Layout = "_Layout";       // Dùng cho máy tính (Desktop)
+    }
 }
 
 <style>
