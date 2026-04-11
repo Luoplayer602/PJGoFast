@@ -1,0 +1,255 @@
+@model TaiXeManagementIndexVM
+@using PJGoFast.Models.Enums
+
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Quản lý tài xế";
+
+    // Helper: tên hiển thị loại xe
+    string TenLoaiXe(string raw) => raw switch
+    {
+        "XeMay"  => "Xe máy",
+        "Sedan"  => "Xe sedan",
+        "SUV"    => "Xe SUV",
+        "BayCho" => "Xe 7 chỗ",
+        "TaiNho" => "Xe tải nhỏ",
+        _        => raw
+    };
+}
+
+<style>
+    /* ── Reuse admin style, swap blue → green ── */
+    .page-hero {
+        background: linear-gradient(160deg, #14532d 0%, #16a34a 60%, #4ade80 100%);
+        color: #fff;
+        border-radius: 28px;
+        padding: 28px 24px;
+        box-shadow: 0 16px 40px rgba(22,163,74,.22);
+        margin-bottom: 18px;
+    }
+    .page-hero h1 { font-size: clamp(1.5rem, 2vw, 2rem); font-weight: 800; margin-bottom: 8px; }
+    .page-hero p  { margin: 0; max-width: 680px; color: rgba(255,255,255,.86); }
+    .hero-actions { margin-top: 18px; }
+    .hero-actions .btn { border-radius: 999px; padding: 10px 18px; font-weight: 700; }
+
+    .summary-bar {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0,1fr));
+        gap: 12px; margin-bottom: 18px;
+    }
+    .sum-chip {
+        background: #fff; border-radius: 18px;
+        padding: 16px 12px; text-align: center;
+        box-shadow: 0 8px 20px rgba(15,23,42,.05);
+    }
+    .sum-chip .sv { font-size: 1.45rem; font-weight: 800; color: #111827; line-height: 1; }
+    .sum-chip .sl { color: #6b7280; font-size: .73rem; text-transform: uppercase; letter-spacing: .06em; margin-top: 6px; font-weight: 700; }
+
+    .list-wrap {
+        background: #fff; border-radius: 24px;
+        padding: 18px;
+        box-shadow: 0 10px 28px rgba(15,23,42,.06);
+    }
+    .list-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+    .list-head h2 { margin: 0; font-size: 1rem; font-weight: 800; }
+    .list-head p  { margin: 4px 0 0; color: #6b7280; font-size: .9rem; }
+
+    .desktop-header {
+        display: grid;
+        grid-template-columns: 0.9fr 1.3fr 1fr 0.85fr 0.85fr 0.8fr 0.65fr;
+        gap: 12px; padding: 0 18px 10px;
+        color: #94a3b8; font-size: .73rem; font-weight: 800;
+        text-transform: uppercase; letter-spacing: .06em;
+    }
+
+    .tx-card {
+        display: block; text-decoration: none; color: inherit;
+        background: #fff; border: 1px solid #eef2f7;
+        border-radius: 20px; padding: 16px 18px;
+        margin-bottom: 10px;
+        transition: transform .15s, box-shadow .15s, border-color .15s;
+        box-shadow: 0 1px 8px rgba(15,23,42,.04);
+    }
+    .tx-card:hover {
+        transform: translateY(-2px);
+        border-color: #bbf7d0;
+        box-shadow: 0 14px 30px rgba(22,163,74,.10);
+        color: inherit;
+    }
+    .tx-grid {
+        display: grid;
+        grid-template-columns: 0.9fr 1.3fr 1fr 0.85fr 0.85fr 0.8fr 0.65fr;
+        gap: 12px; align-items: center;
+    }
+    .tx-field .label {
+        display: none; font-size: .72rem; color: #94a3b8;
+        text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; font-weight: 700;
+    }
+    .tx-field .value { font-size: .92rem; font-weight: 700; color: #111827; line-height: 1.35; }
+    .tx-field .value.mono { font-family: Consolas, monospace; font-size: .84rem; }
+
+    /* Online badges */
+    .online-badge {
+        display: inline-flex; align-items: center; gap: 5px;
+        border-radius: 999px; padding: 5px 10px;
+        font-size: .76rem; font-weight: 800; white-space: nowrap;
+    }
+    .badge-online  { background: #dcfce7; color: #15803d; }
+    .badge-busy    { background: #fff7ed; color: #c2410c; }
+    .badge-offline { background: #f1f5f9; color: #64748b; }
+
+    /* HoatDong badge */
+    .hoat-dong-badge { background: #f0fdf4; color: #16a34a; }
+    .nghi-viec-badge { background: #fef2f2; color: #dc2626; }
+
+    .detail-link {
+        display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+        border-radius: 999px; padding: 8px 12px;
+        background: #f0fdf4; color: #16a34a;
+        font-size: .82rem; font-weight: 800;
+    }
+
+    .empty-state { text-align: center; padding: 56px 20px 44px; color: #94a3b8; }
+    .empty-state i { font-size: 3rem; display: block; margin-bottom: 14px; color: #cbd5e1; }
+    .empty-state .title { color: #334155; font-size: 1.05rem; font-weight: 800; margin-bottom: 6px; }
+
+    @@media (max-width: 992px) {
+        .summary-bar { grid-template-columns: repeat(3, minmax(0,1fr)); }
+        .desktop-header, .tx-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    }
+    @@media (max-width: 768px) {
+        .summary-bar { grid-template-columns: repeat(2, minmax(0,1fr)); }
+        .desktop-header { display: none; }
+        .tx-grid { grid-template-columns: 1fr; gap: 12px; }
+        .tx-field .label { display: block; }
+        .detail-link { width: 100%; justify-content: center; }
+    }
+</style>
+
+<!-- Alert TempData -->
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show rounded-4 mb-3" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show rounded-4 mb-3" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="page-hero">
+    <h1><i class="bi bi-car-front-fill me-2 opacity-75"></i>Quản lý tài xế</h1>
+    <p>Danh sách tài xế đang hoạt động trong hệ thống GoFast. Chọn một dòng để xem chi tiết, sửa hoặc xóa.</p>
+    <div class="hero-actions d-flex gap-2 flex-wrap">
+        <a asp-action="CreateTX" class="btn btn-light text-success">
+            <i class="bi bi-person-plus-fill me-1"></i> Thêm tài xế mới
+        </a>
+        <a asp-controller="Admin" asp-action="Menu" class="btn btn-outline-light">
+            <i class="bi bi-grid me-1"></i> Menu quản trị
+        </a>
+    </div>
+</div>
+
+<!-- Summary -->
+<div class="summary-bar">
+    <div class="sum-chip">
+        <div class="sv">@Model.TongSo</div><div class="sl">Tổng số</div>
+    </div>
+    <div class="sum-chip">
+        <div class="sv text-success">@Model.SoOnline</div><div class="sl">Online</div>
+    </div>
+    <div class="sum-chip">
+        <div class="sv text-warning">@Model.SoBusy</div><div class="sl">Bận</div>
+    </div>
+    <div class="sum-chip">
+        <div class="sv text-secondary">@Model.SoOffline</div><div class="sl">Offline</div>
+    </div>
+    <div class="sum-chip">
+        <div class="sv" style="color:#16a34a;">@Model.SoHoatDong</div><div class="sl">Hoạt động</div>
+    </div>
+    <div class="sum-chip">
+        <div class="sv text-danger">@Model.SoNghiViec</div><div class="sl">Nghỉ việc</div>
+    </div>
+</div>
+
+<div class="list-wrap">
+    <div class="list-head">
+        <div>
+            <h2>Danh sách tài xế</h2>
+            <p>Hiển thị: Id, tên, SĐT, loại xe, trạng thái online, trạng thái hoạt động.</p>
+        </div>
+    </div>
+
+    @if (!Model.TaiXes.Any())
+    {
+        <div class="empty-state">
+            <i class="bi bi-car-front"></i>
+            <div class="title">Chưa có tài xế nào</div>
+            <div>Nhấn "Thêm tài xế mới" để bắt đầu xây dựng đội ngũ.</div>
+        </div>
+    }
+    else
+    {
+        <div class="desktop-header">
+            <span>Mã TX</span>
+            <span>Tên</span>
+            <span>SĐT</span>
+            <span>Loại xe</span>
+            <span>Online</span>
+            <span>Hoạt động</span>
+            <span></span>
+        </div>
+
+        @foreach (var tx in Model.TaiXes)
+        {
+            var onlineCls  = tx.TrangThaiOnline switch { "ONLINE" => "badge-online", "BUSY" => "badge-busy", _ => "badge-offline" };
+            var onlineTxt  = tx.TrangThaiOnline switch { "ONLINE" => "Online", "BUSY" => "Bận", _ => "Offline" };
+            var hdCls      = tx.TrangThaiHoatDong == "HoatDong" ? "hoat-dong-badge" : "nghi-viec-badge";
+            var hdTxt      = tx.TrangThaiHoatDong == "HoatDong" ? "Hoạt động" : "Nghỉ việc";
+
+            <a asp-action="DetailsTX" asp-route-id="@tx.IdTX" class="tx-card">
+                <div class="tx-grid">
+                    <div class="tx-field">
+                        <div class="label">Mã TX</div>
+                        <div class="value mono">@tx.IdTX</div>
+                    </div>
+                    <div class="tx-field">
+                        <div class="label">Tên</div>
+                        <div class="value">@tx.HoVaTen</div>
+                    </div>
+                    <div class="tx-field">
+                        <div class="label">SĐT</div>
+                        <div class="value">@tx.SDT</div>
+                    </div>
+                    <div class="tx-field">
+                        <div class="label">Loại xe</div>
+                        <div class="value">@TenLoaiXe(tx.LoaiXe)</div>
+                    </div>
+                    <div class="tx-field">
+                        <div class="label">Online</div>
+                        <div class="value">
+                            <span class="online-badge @onlineCls">@onlineTxt</span>
+                        </div>
+                    </div>
+                    <div class="tx-field">
+                        <div class="label">Hoạt động</div>
+                        <div class="value">
+                            <span class="online-badge @hdCls">@hdTxt</span>
+                        </div>
+                    </div>
+                    <div class="tx-field">
+                        <div class="label">Chi tiết</div>
+                        <div class="value">
+                            <span class="detail-link">Chi tiết <i class="bi bi-chevron-right"></i></span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        }
+    }
+</div>

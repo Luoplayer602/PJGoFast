@@ -21,9 +21,10 @@ namespace PJGoFast.Models.Entities
 
         public LoaiXe LoaiXe { get; set; }
 
-        public string DiemDoi { get; set; }
+        
+        public string? DiemDoi { get; set; }
 
-        public string ViTri { get; set; }
+        public string? ViTri { get; set; }
 
         //TrangThaiOnline
         public TrangThaiOnline TrangThaiOnline { get; set; } = TrangThaiOnline.OFFLINE;

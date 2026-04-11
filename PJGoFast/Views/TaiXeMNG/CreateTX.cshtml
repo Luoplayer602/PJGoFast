@@ -1,0 +1,192 @@
+@model TaiXeCreateVM
+@using PJGoFast.Models.Enums
+
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Thêm tài xế";
+}
+
+<style>
+    .card-header-custom {
+        background: linear-gradient(160deg, #14532d 0%, #16a34a 60%, #4ade80 100%);
+        border-radius: 24px; padding: 22px 24px; color: #fff;
+        box-shadow: 0 16px 40px rgba(22,163,74,.20);
+    }
+    .card-header-custom .icon-wrap {
+        width: 52px; height: 52px; border-radius: 18px;
+        background: rgba(255,255,255,.18);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.4rem;
+    }
+    .tx-form-card {
+        background: #fff; border-radius: 24px; border: none;
+        box-shadow: 0 16px 32px rgba(15,23,42,.06);
+    }
+    .tx-form-card .form-control,
+    .tx-form-card .form-select {
+        border-radius: 16px; min-height: 48px; border-color: #dbe2ea;
+    }
+    .tx-form-card .input-group-text {
+        border-radius: 16px 0 0 16px; background: #f8fafc; border-color: #dbe2ea;
+    }
+    .tx-form-card .input-group .form-control,
+    .tx-form-card .input-group .form-select { border-radius: 0 16px 16px 0; }
+    .tx-form-card .form-control:focus, .tx-form-card .form-select:focus {
+        border-color: #86efac; box-shadow: 0 0 0 3px rgba(22,163,74,.12);
+    }
+    /* Green icon color in input groups */
+    .tx-form-card .input-group-text i { color: #16a34a !important; }
+
+    .section-divider {
+        border: none; border-top: 1.5px dashed #e2e8f0; margin: 24px 0 20px;
+    }
+    .section-label {
+        font-size: .75rem; font-weight: 800; text-transform: uppercase;
+        letter-spacing: .07em; color: #94a3b8; margin-bottom: 16px;
+        display: flex; align-items: center; gap: 7px;
+    }
+    .id-hint {
+        background: #f0fdf4; border: 1px solid #bbf7d0;
+        border-radius: 12px; padding: 10px 14px;
+        font-size: .8rem; color: #166534; margin-top: 6px;
+    }
+    .action-row {
+        display: flex; gap: 12px; justify-content: space-between; flex-wrap: wrap;
+    }
+    .action-row .btn { border-radius: 999px; padding: 11px 18px; font-weight: 700; }
+    .btn-success-custom {
+        background: #16a34a; border-color: #16a34a; color: #fff;
+    }
+    .btn-success-custom:hover { background: #15803d; border-color: #15803d; color: #fff; }
+</style>
+
+<div class="row justify-content-center">
+    <div class="col-xl-8 col-lg-9">
+
+        <!-- Header -->
+        <div class="card-header-custom mb-4">
+            <div class="d-flex align-items-center gap-3">
+                <div class="icon-wrap"><i class="bi bi-person-plus-fill"></i></div>
+                <div>
+                    <h1 class="h3 mb-1 fw-bold">Thêm tài xế mới</h1>
+                    <p class="mb-0" style="color:rgba(255,255,255,.75);">
+                        Tạo tài khoản tài xế với mã bắt đầu bằng <strong>TX</strong>, thông tin cơ bản và mật khẩu ban đầu.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card tx-form-card">
+            <div class="card-body p-4 p-lg-5">
+                <form asp-action="CreateTX" method="post">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger rounded-4 mb-4"></div>
+
+                    <!-- Mã TX + Loại xe -->
+                    <div class="section-label"><i class="bi bi-hash text-success"></i> Định danh tài xế</div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="IdTX" class="form-label fw-semibold">Mã tài xế</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-hash"></i></span>
+                                <input asp-for="IdTX" class="form-control" placeholder="VD: TX001, TX002..." />
+                            </div>
+                            <div class="id-hint"><i class="bi bi-info-circle me-1"></i> Mã phải bắt đầu bằng <strong>TX</strong> và theo sau là số. Ví dụ: <strong>TX001</strong>.</div>
+                            <span asp-validation-for="IdTX" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="LoaiXe" class="form-label fw-semibold">Loại xe</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-car-front-fill"></i></span>
+                                <select asp-for="LoaiXe" asp-items="Html.GetEnumSelectList<LoaiXe>()" class="form-select">
+                                    <option value="">-- Chọn loại xe --</option>
+                                </select>
+                            </div>
+                            <span asp-validation-for="LoaiXe" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <hr class="section-divider" />
+
+                    <!-- Thông tin cá nhân -->
+                    <div class="section-label"><i class="bi bi-person-fill text-success"></i> Thông tin cá nhân</div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="HoVaTen" class="form-label fw-semibold">Họ và tên</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
+                                <input asp-for="HoVaTen" class="form-control" placeholder="Nhập họ và tên đầy đủ" />
+                            </div>
+                            <span asp-validation-for="HoVaTen" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="SDT" class="form-label fw-semibold">Số điện thoại</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-telephone-fill"></i></span>
+                                <input asp-for="SDT" class="form-control" placeholder="VD: 0912345678" />
+                            </div>
+                            <span asp-validation-for="SDT" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="NgaySinh" class="form-label fw-semibold">Ngày sinh</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
+                                <input asp-for="NgaySinh" type="date" class="form-control" />
+                            </div>
+                            <span asp-validation-for="NgaySinh" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="DiemDoi" class="form-label fw-semibold">Điểm đỗ</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-geo-alt-fill"></i></span>
+                                <input asp-for="DiemDoi" class="form-control" placeholder="Địa chỉ điểm đỗ xe (tuỳ chọn)" />
+                            </div>
+                            <span asp-validation-for="DiemDoi" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <hr class="section-divider" />
+
+                    <!-- Mật khẩu -->
+                    <div class="section-label"><i class="bi bi-key-fill text-success"></i> Mật khẩu đăng nhập</div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label asp-for="MatKhau" class="form-label fw-semibold">Mật khẩu</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-key-fill"></i></span>
+                                <input asp-for="MatKhau" type="password" class="form-control" placeholder="Tối thiểu 6 ký tự" />
+                            </div>
+                            <span asp-validation-for="MatKhau" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="XacNhanMatKhau" class="form-label fw-semibold">Xác nhận mật khẩu</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-shield-lock-fill"></i></span>
+                                <input asp-for="XacNhanMatKhau" type="password" class="form-control" placeholder="Nhập lại mật khẩu" />
+                            </div>
+                            <span asp-validation-for="XacNhanMatKhau" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="action-row">
+                        <a asp-action="IndexTX" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-1"></i> Quay lại danh sách
+                        </a>
+                        <button type="submit" class="btn btn-success-custom">
+                            <i class="bi bi-check2-circle me-1"></i> Tạo tài xế
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}

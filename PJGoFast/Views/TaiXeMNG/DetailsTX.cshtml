@@ -1,0 +1,281 @@
+@model TaiXeDetailsVM
+@using PJGoFast.Models.Enums
+
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Chi tiết tài xế";
+
+    var initials = string.IsNullOrWhiteSpace(Model.HoVaTen) ? "?"
+        : string.Join("", Model.HoVaTen.Trim()
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .TakeLast(2).Select(p => p[0].ToString().ToUpper()));
+
+    var tenLoaiXe = Model.LoaiXe switch
+    {
+        LoaiXe.XeMay   => "Xe máy",
+        LoaiXe.Sedan   => "Xe sedan",
+        LoaiXe.SUV     => "Xe SUV",
+        LoaiXe.BayCho  => "Xe 7 chỗ",
+        LoaiXe.TaiNho  => "Xe tải nhỏ",
+        _              => Model.LoaiXe.ToString()
+    };
+
+    var onlineTxt = Model.TrangThaiOnline switch
+    {
+        "ONLINE" => "Online",
+        "BUSY"   => "Đang bận",
+        _        => "Offline"
+    };
+    var onlineColor = Model.TrangThaiOnline switch
+    {
+        "ONLINE" => "#16a34a",
+        "BUSY"   => "#ea580c",
+        _        => "#64748b"
+    };
+}
+
+<style>
+    /* ── Hero — KHÔNG dùng padding-bottom lớn để tránh overlap ── */
+    .tx-hero {
+        background: linear-gradient(160deg, #14532d 0%, #16a34a 60%, #4ade80 100%);
+        padding: 30px 24px 28px;   /* padding đều, KHÔNG kéo dài xuống */
+        text-align: center;
+        border-radius: 28px;
+        box-shadow: 0 18px 40px rgba(22,163,74,.22);
+        margin-bottom: 20px;       /* khoảng cách tới card bên dưới */
+    }
+    .tx-hero .avatar-circle {
+        width: 88px; height: 88px; border-radius: 50%;
+        background: rgba(255,255,255,.2);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 2rem; font-weight: 800; color: #fff;
+        margin: 0 auto 12px;
+        border: 3px solid rgba(255,255,255,.35);
+    }
+    .tx-hero .name { font-size: 1.2rem; font-weight: 800; color: #fff; margin-bottom: 6px; }
+    .tx-hero .role-tag {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: rgba(255,255,255,.2); color: #fff;
+        border-radius: 999px; padding: 5px 16px; font-size: .79rem; font-weight: 700;
+    }
+    .tx-hero .id-chip {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: rgba(255,255,255,.14); border-radius: 999px;
+        padding: 5px 14px; font-size: .76rem; color: rgba(255,255,255,.9);
+        margin-top: 10px; font-family: Consolas, monospace;
+    }
+
+    /* ── Info card — margin-top: 0, không dùng negative margin ── */
+    .info-card {
+        background: #fff; border-radius: 24px;
+        box-shadow: 0 10px 28px rgba(15,23,42,.07);
+        overflow: hidden;
+        max-width: 860px; margin: 0 auto 16px;
+    }
+    .info-row {
+        display: flex; align-items: center; gap: 14px;
+        padding: 16px 22px; border-bottom: 1px solid #f1f5f9;
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-icon {
+        width: 42px; height: 42px; border-radius: 14px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1rem; flex-shrink: 0;
+    }
+    .ilabel { font-size: .73rem; color: #94a3b8; margin-bottom: 2px; text-transform: uppercase; letter-spacing: .04em; font-weight: 700; }
+    .ival   { font-size: .97rem; font-weight: 700; color: #111827; }
+
+    /* ── Stats mini row ── */
+    .stats-mini {
+        display: grid; grid-template-columns: repeat(2, 1fr);
+        gap: 12px; max-width: 860px; margin: 0 auto 16px;
+    }
+    .stat-mini-chip {
+        background: #fff; border-radius: 18px; padding: 18px 16px;
+        box-shadow: 0 4px 14px rgba(15,23,42,.06); text-align: center;
+    }
+    .stat-mini-chip .sv { font-size: 1.5rem; font-weight: 800; color: #111; }
+    .stat-mini-chip .sl { font-size: .73rem; color: #6b7280; margin-top: 4px; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; }
+
+    /* ── Actions ── */
+    .actions-wrap {
+        max-width: 860px; margin: 0 auto 0;
+        display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px;
+    }
+    .actions-wrap .btn { border-radius: 16px; padding: 13px 16px; font-weight: 800; }
+
+    /* ── Confirm sheet ── */
+    .confirm-overlay {
+        position: fixed; inset: 0;
+        display: none; align-items: flex-end; justify-content: center;
+        background: rgba(15,23,42,.45); z-index: 500;
+    }
+    .confirm-overlay.show { display: flex; }
+    .confirm-sheet {
+        width: 100%; max-width: 520px;
+        background: #fff; border-radius: 26px 26px 0 0;
+        padding: 28px 24px 28px;
+        box-shadow: 0 -16px 32px rgba(15,23,42,.14);
+    }
+    .confirm-sheet .icon-wrap {
+        width: 58px; height: 58px; border-radius: 50%;
+        background: #fef2f2; color: #dc2626;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.5rem; margin: 0 auto 14px;
+    }
+    .confirm-sheet h5 { text-align: center; font-weight: 800; margin-bottom: 8px; }
+    .confirm-sheet p  { text-align: center; color: #64748b; margin-bottom: 18px; }
+    .confirm-actions { display: grid; gap: 10px; }
+    .confirm-actions .btn { border-radius: 16px; padding: 13px; font-weight: 800; }
+
+    @@media (max-width: 768px) {
+        .stats-mini { grid-template-columns: 1fr; }
+        .actions-wrap { grid-template-columns: 1fr; }
+    }
+</style>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show rounded-4 mb-3">
+        <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show rounded-4 mb-3">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Hero (không overlap) -->
+<div class="tx-hero">
+    <div class="avatar-circle">@initials</div>
+    <div class="name">@Model.HoVaTen</div>
+    <div class="mt-2">
+        <span class="role-tag" style="background:rgba(255,255,255,.22);">
+            <i class="bi bi-car-front-fill"></i> Tài xế
+        </span>
+    </div>
+    <div class="id-chip"><i class="bi bi-hash"></i>@Model.IdTX</div>
+</div>
+
+<!-- Stats mini -->
+<div class="stats-mini">
+    <div class="stat-mini-chip">
+        <div class="sv">@Model.SoChuyenDaLam</div>
+        <div class="sl">Chuyến đã thực hiện</div>
+    </div>
+    <div class="stat-mini-chip">
+        <div class="sv" style="color:@onlineColor;">@onlineTxt</div>
+        <div class="sl">Trạng thái hiện tại</div>
+    </div>
+</div>
+
+<!-- Info card -->
+<div class="info-card">
+    <div class="info-row">
+        <div class="info-icon" style="background:#f0fdf4;color:#16a34a;"><i class="bi bi-person-vcard-fill"></i></div>
+        <div>
+            <div class="ilabel">Mã tài xế</div>
+            <div class="ival" style="font-family:Consolas,monospace;">@Model.IdTX</div>
+        </div>
+    </div>
+    <div class="info-row">
+        <div class="info-icon" style="background:#eff6ff;color:#2563eb;"><i class="bi bi-person-fill"></i></div>
+        <div><div class="ilabel">Họ và tên</div><div class="ival">@Model.HoVaTen</div></div>
+    </div>
+    <div class="info-row">
+        <div class="info-icon" style="background:#fff7ed;color:#ea580c;"><i class="bi bi-telephone-fill"></i></div>
+        <div><div class="ilabel">Số điện thoại</div><div class="ival">@Model.SDT</div></div>
+    </div>
+    <div class="info-row">
+        <div class="info-icon" style="background:#fdf4ff;color:#9333ea;"><i class="bi bi-calendar-event-fill"></i></div>
+        <div>
+            <div class="ilabel">Ngày sinh</div>
+            <div class="ival">@(Model.NgaySinh?.ToString("dd/MM/yyyy") ?? "Chưa cập nhật")</div>
+        </div>
+    </div>
+    <div class="info-row">
+        <div class="info-icon" style="background:#f0fdf4;color:#16a34a;"><i class="bi bi-car-front-fill"></i></div>
+        <div><div class="ilabel">Loại xe</div><div class="ival">@tenLoaiXe</div></div>
+    </div>
+    <div class="info-row">
+        <div class="info-icon" style="background:#fef9c3;color:#a16207;"><i class="bi bi-geo-alt-fill"></i></div>
+        <div><div class="ilabel">Điểm đỗ</div><div class="ival">@(Model.DiemDoi ?? "Chưa cập nhật")</div></div>
+    </div>
+    @if (!string.IsNullOrWhiteSpace(Model.ViTri))
+    {
+        <div class="info-row">
+            <div class="info-icon" style="background:#ecfdf5;color:#059669;"><i class="bi bi-pin-map-fill"></i></div>
+            <div><div class="ilabel">Vị trí hiện tại</div><div class="ival">@Model.ViTri</div></div>
+        </div>
+    }
+    <div class="info-row">
+        <div class="info-icon" style="background:#f1f5f9;color:#64748b;"><i class="bi bi-activity"></i></div>
+        <div>
+            <div class="ilabel">Trạng thái hoạt động</div>
+            <div class="ival">
+                @if (Model.TrangThaiHoatDong == "HoatDong")
+                {
+                    <span style="background:#dcfce7;color:#15803d;border-radius:999px;padding:4px 12px;font-size:.82rem;font-weight:800;">Đang hoạt động</span>
+                }
+                else
+                {
+                    <span style="background:#fef2f2;color:#dc2626;border-radius:999px;padding:4px 12px;font-size:.82rem;font-weight:800;">Nghỉ việc</span>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Actions -->
+<div class="actions-wrap">
+    <a asp-action="IndexTX" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Danh sách
+    </a>
+    <a asp-action="EditTX" asp-route-id="@Model.IdTX" class="btn btn-success">
+        <i class="bi bi-pencil-square me-1"></i> Sửa thông tin
+    </a>
+    <button type="button" class="btn btn-outline-danger" onclick="showDeleteConfirm()">
+        <i class="bi bi-trash3-fill me-1"></i> Xóa tài xế
+    </button>
+</div>
+
+<!-- Confirm sheet -->
+<div class="confirm-overlay" id="deleteConfirmOverlay" onclick="hideDeleteConfirm(event)">
+    <div class="confirm-sheet" onclick="event.stopPropagation()">
+        <div class="icon-wrap"><i class="bi bi-exclamation-triangle-fill"></i></div>
+        <h5>Xác nhận xóa tài xế?</h5>
+        <p>Thao tác này sẽ xóa tài khoản <strong>@Model.HoVaTen</strong> (@Model.IdTX) khỏi hệ thống và không thể hoàn tác.</p>
+        <div class="confirm-actions">
+            <form asp-action="DeleteTX" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.IdTX" />
+                <button type="submit" class="btn btn-danger w-100">
+                    <i class="bi bi-trash3-fill me-1"></i> Xác nhận xóa
+                </button>
+            </form>
+            <button type="button" class="btn btn-light border" onclick="hideDeleteConfirm()">
+                Giữ lại tài xế
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    function showDeleteConfirm() {
+        document.getElementById('deleteConfirmOverlay').classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+    function hideDeleteConfirm(event) {
+        const overlay = document.getElementById('deleteConfirmOverlay');
+        if (!event || event.target === overlay) {
+            overlay.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+    }
+</script>
+}

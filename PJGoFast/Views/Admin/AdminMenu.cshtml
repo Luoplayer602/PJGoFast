@@ -1,0 +1,203 @@
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Trung tâm quản trị";
+}
+
+<style>
+    .menu-hero {
+        background: linear-gradient(160deg, #0f172a 0%, #1e293b 55%, #1d4ed8 100%);
+        color: #fff;
+        border-radius: 28px;
+        padding: 34px 28px;
+        box-shadow: 0 20px 48px rgba(15,23,42,.28);
+        margin-bottom: 24px;
+        position: relative;
+        overflow: hidden;
+    }
+    .menu-hero::before {
+        content: '';
+        position: absolute;
+        top: -80px; right: -80px;
+        width: 280px; height: 280px;
+        background: radial-gradient(circle, rgba(99,102,241,.18) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    .menu-hero::after {
+        content: '';
+        position: absolute;
+        bottom: -60px; left: 20%;
+        width: 200px; height: 200px;
+        background: radial-gradient(circle, rgba(37,99,235,.14) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    .menu-hero h1 {
+        font-size: clamp(1.55rem, 2.5vw, 2.2rem);
+        font-weight: 800;
+        margin-bottom: 8px;
+        letter-spacing: -.02em;
+    }
+    .menu-hero p { margin: 0; color: rgba(255,255,255,.68); max-width: 600px; }
+    .time-chip {
+        display: inline-flex; align-items: center; gap: 7px;
+        background: rgba(255,255,255,.12);
+        border-radius: 999px; padding: 6px 16px;
+        font-size: .79rem; color: rgba(255,255,255,.82);
+        margin-bottom: 16px; border: 1px solid rgba(255,255,255,.12);
+    }
+
+    /* ── Tiles ── */
+    .menu-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    .menu-tile {
+        background: #fff;
+        border-radius: 22px;
+        padding: 22px 20px 18px;
+        text-decoration: none; color: inherit;
+        box-shadow: 0 2px 14px rgba(15,23,42,.06);
+        border: 1.5px solid #f1f5f9;
+        display: flex; flex-direction: column; gap: 10px;
+        transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+        position: relative; overflow: hidden;
+    }
+    .menu-tile::after {
+        content: ''; position: absolute;
+        bottom: 0; left: 0; right: 0; height: 3px;
+        border-radius: 0 0 22px 22px; opacity: 0;
+        transition: opacity .18s;
+    }
+    .menu-tile:hover { transform: translateY(-3px); box-shadow: 0 16px 36px rgba(15,23,42,.10); color: inherit; }
+    .menu-tile:hover::after { opacity: 1; }
+
+    /* Blue */
+    .tile-blue .tile-icon { background:#eff6ff; color:#2563eb; }
+    .tile-blue::after     { background:#2563eb; }
+    .tile-blue:hover      { border-color:#bfdbfe; }
+    /* Green */
+    .tile-green .tile-icon { background:#f0fdf4; color:#16a34a; }
+    .tile-green::after     { background:#16a34a; }
+    .tile-green:hover      { border-color:#bbf7d0; }
+    /* Orange */
+    .tile-orange .tile-icon { background:#fff7ed; color:#ea580c; }
+    .tile-orange::after     { background:#ea580c; }
+    .tile-orange:hover      { border-color:#fed7aa; }
+    /* Purple */
+    .tile-purple .tile-icon { background:#fdf4ff; color:#9333ea; }
+    .tile-purple::after     { background:#9333ea; }
+    .tile-purple:hover      { border-color:#e9d5ff; }
+
+    .tile-icon {
+        width: 52px; height: 52px; border-radius: 16px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.4rem; flex-shrink: 0;
+    }
+    .tile-title { font-size: .98rem; font-weight: 800; color: #111827; }
+    .tile-desc  { font-size: .81rem; color: #6b7280; line-height: 1.5; flex: 1; }
+    .tile-arrow {
+        display: flex; align-items: center; gap: 5px;
+        font-size: .8rem; font-weight: 700; color: #94a3b8;
+        transition: color .15s; margin-top: 6px;
+    }
+    .menu-tile:hover .tile-arrow { color: #374151; }
+
+    /* ── Quick stats bar ── */
+    .stats-wrap {
+        background: #fff; border-radius: 22px;
+        padding: 20px 22px;
+        box-shadow: 0 2px 14px rgba(15,23,42,.06);
+        border: 1.5px solid #f1f5f9;
+    }
+    .stats-label {
+        font-size: .73rem; font-weight: 800; text-transform: uppercase;
+        letter-spacing: .07em; color: #94a3b8; margin-bottom: 14px;
+    }
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
+    .stat-chip {
+        background: #f8fafc; border-radius: 14px;
+        padding: 14px 10px; text-align: center;
+    }
+    .stat-chip .sv { font-size: 1.45rem; font-weight: 800; color: #111; line-height: 1; }
+    .stat-chip .sl { font-size: .68rem; color: #6b7280; margin-top: 5px; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; }
+
+    @@media (max-width: 576px) {
+        .menu-grid  { grid-template-columns: 1fr; }
+        .stats-row  { grid-template-columns: repeat(2, 1fr); }
+    }
+</style>
+
+<!-- Hero -->
+<div class="menu-hero">
+    <div class="time-chip">
+        <i class="bi bi-clock-fill"></i>
+        <span id="liveTime">--:--</span>
+        &nbsp;·&nbsp;
+        <span id="liveDate">--/--/----</span>
+    </div>
+    <h1><i class="bi bi-speedometer2 me-2 opacity-75"></i>Trung tâm quản trị</h1>
+    <p>Chào mừng trở lại, <strong>@User.Identity?.Name</strong>. Chọn chức năng muốn quản lý bên dưới.</p>
+</div>
+
+<!-- Menu tiles -->
+<div class="menu-grid">
+
+    <a asp-controller="Admin" asp-action="Index" class="menu-tile tile-blue">
+        <div class="tile-icon"><i class="bi bi-shield-lock-fill"></i></div>
+        <div class="tile-title">Quản lý Admin</div>
+        <div class="tile-desc">Xem, thêm, sửa và xóa tài khoản quản trị viên và điều phối viên.</div>
+        <div class="tile-arrow">Mở chức năng <i class="bi bi-arrow-right"></i></div>
+    </a>
+
+    <a asp-controller="TaiXeMNG" asp-action="IndexTX" class="menu-tile tile-green">
+        <div class="tile-icon"><i class="bi bi-car-front-fill"></i></div>
+        <div class="tile-title">Quản lý Tài xế</div>
+        <div class="tile-desc">Quản lý danh sách tài xế, loại xe, trạng thái hoạt động và đặt lại mật khẩu.</div>
+        <div class="tile-arrow">Mở chức năng <i class="bi bi-arrow-right"></i></div>
+    </a>
+
+    <a asp-controller="Admin" asp-action="QuanLyChuyenDi" class="menu-tile tile-orange">
+        <div class="tile-icon"><i class="bi bi-map-fill"></i></div>
+        <div class="tile-title">Quản lý Chuyến đi</div>
+        <div class="tile-desc">Theo dõi và điều phối các chuyến đi, phân công tài xế, xử lý sự cố.</div>
+        <div class="tile-arrow">Mở chức năng <i class="bi bi-arrow-right"></i></div>
+    </a>
+
+    <a asp-controller="Admin" asp-action="QuanLyKhachHang" class="menu-tile tile-purple">
+        <div class="tile-icon"><i class="bi bi-people-fill"></i></div>
+        <div class="tile-title">Quản lý Khách hàng</div>
+        <div class="tile-desc">Xem thông tin, lịch sử và hỗ trợ tài khoản khách hàng trong hệ thống.</div>
+        <div class="tile-arrow">Mở chức năng <i class="bi bi-arrow-right"></i></div>
+    </a>
+
+</div>
+
+<!-- Quick stats (static placeholder, có thể inject số thực từ controller) -->
+@if (ViewBag.Stats != null)
+{
+    var s = ViewBag.Stats;
+    <div class="stats-wrap">
+        <div class="stats-label"><i class="bi bi-bar-chart-fill me-1"></i> Tổng quan hệ thống</div>
+        <div class="stats-row">
+            <div class="stat-chip"><div class="sv">@s.TongTaiXe</div><div class="sl">Tài xế</div></div>
+            <div class="stat-chip"><div class="sv">@s.TongAdmin</div><div class="sl">Admin</div></div>
+            <div class="stat-chip"><div class="sv">@s.TongKhachHang</div><div class="sl">Khách hàng</div></div>
+            <div class="stat-chip"><div class="sv">@s.ChuyenHomNay</div><div class="sl">Chuyến hôm nay</div></div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+<script>
+    function updateClock() {
+        const now  = new Date();
+        const time = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+        const date = now.toLocaleDateString('vi-VN');
+        document.getElementById('liveTime').textContent = time;
+        document.getElementById('liveDate').textContent = date;
+    }
+    updateClock();
+    setInterval(updateClock, 10000);
+</script>
+}

@@ -135,5 +135,11 @@ namespace PJGoFast.Controllers
             TempData["Success"] = "Đã xóa admin.";
             return RedirectToAction(nameof(Index));
         }
+
+        public IActionResult AdminMenu()
+        {
+            return View();
+        }
+
     }
 }

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PJGoFast.Data;
 
@@ -11,9 +12,11 @@ using PJGoFast.Data;
 namespace PJGoFast.Migrations
 {
     [DbContext(typeof(PJGoFastDbContext))]
-    partial class PJGoFastDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260411013701_TaiXe1")]
+    partial class TaiXe1
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

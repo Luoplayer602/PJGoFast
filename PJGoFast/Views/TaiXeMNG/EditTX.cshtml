@@ -1,0 +1,264 @@
+@model TaiXeEditVM
+@using PJGoFast.Models.Enums
+
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Sửa tài xế";
+}
+
+<style>
+    .card-header-custom {
+        background: linear-gradient(160deg, #14532d 0%, #16a34a 60%, #4ade80 100%);
+        border-radius: 24px; padding: 22px 24px; color: #fff;
+        box-shadow: 0 16px 40px rgba(22,163,74,.20);
+    }
+    .card-header-custom .icon-wrap {
+        width: 52px; height: 52px; border-radius: 18px;
+        background: rgba(255,255,255,.18);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.4rem;
+    }
+    .tx-form-card {
+        background: #fff; border-radius: 24px; border: none;
+        box-shadow: 0 16px 32px rgba(15,23,42,.06);
+    }
+    .tx-form-card .form-control,
+    .tx-form-card .form-select {
+        border-radius: 16px; min-height: 48px; border-color: #dbe2ea;
+    }
+    .tx-form-card .input-group-text {
+        border-radius: 16px 0 0 16px; background: #f8fafc; border-color: #dbe2ea;
+    }
+    .tx-form-card .input-group .form-control,
+    .tx-form-card .input-group .form-select { border-radius: 0 16px 16px 0; }
+    .tx-form-card .form-control:focus, .tx-form-card .form-select:focus {
+        border-color: #86efac; box-shadow: 0 0 0 3px rgba(22,163,74,.12);
+    }
+    .tx-form-card .input-group-text i { color: #16a34a !important; }
+
+    .section-divider { border: none; border-top: 1.5px dashed #e2e8f0; margin: 24px 0 20px; }
+    .section-label {
+        font-size: .75rem; font-weight: 800; text-transform: uppercase;
+        letter-spacing: .07em; color: #94a3b8; margin-bottom: 16px;
+        display: flex; align-items: center; gap: 7px;
+    }
+
+    .reset-card {
+        background: linear-gradient(135deg, #f0fdf4, #f8fafc);
+        border: 1.5px solid #bbf7d0; border-radius: 20px; padding: 18px; margin-top: 8px;
+    }
+    .reset-card .btn { border-radius: 999px; font-weight: 800; }
+    .password-panel { display: none; margin-top: 16px; }
+    .password-panel.show { display: block; }
+
+    .status-options { display: flex; gap: 10px; flex-wrap: wrap; }
+    .status-option {
+        flex: 1; min-width: 140px;
+        border: 2px solid #e2e8f0; border-radius: 16px;
+        padding: 14px 16px; cursor: pointer;
+        display: flex; align-items: center; gap: 10px;
+        transition: border-color .15s, background .15s;
+    }
+    .status-option input[type="radio"] { display: none; }
+    .status-option.active-hoat-dong { border-color: #16a34a; background: #f0fdf4; }
+    .status-option.active-nghi-viec  { border-color: #dc2626; background: #fef2f2; }
+    .status-option .s-dot {
+        width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+    }
+    .status-option .s-label { font-size: .88rem; font-weight: 700; color: #374151; }
+
+    .action-row {
+        display: flex; gap: 12px; justify-content: space-between; flex-wrap: wrap;
+    }
+    .action-row .btn { border-radius: 999px; padding: 11px 18px; font-weight: 700; }
+    .btn-success-custom { background: #16a34a; border-color: #16a34a; color: #fff; }
+    .btn-success-custom:hover { background: #15803d; border-color: #15803d; color: #fff; }
+</style>
+
+<div class="row justify-content-center">
+    <div class="col-xl-8 col-lg-9">
+
+        <!-- Header -->
+        <div class="card-header-custom mb-4">
+            <div class="d-flex align-items-center gap-3">
+                <div class="icon-wrap"><i class="bi bi-pencil-square"></i></div>
+                <div>
+                    <h1 class="h3 mb-1 fw-bold">Chỉnh sửa tài xế</h1>
+                    <p class="mb-0" style="color:rgba(255,255,255,.75);">
+                        Cập nhật thông tin liên hệ, loại xe, trạng thái và đặt lại mật khẩu khi cần.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card tx-form-card">
+            <div class="card-body p-4 p-lg-5">
+                <form asp-action="EditTX" method="post">
+                    @Html.AntiForgeryToken()
+                    <input asp-for="IdTX" type="hidden" />
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger rounded-4 mb-4"></div>
+
+                    <!-- Mã TX (readonly) -->
+                    <div class="section-label"><i class="bi bi-hash text-success"></i> Định danh</div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Mã tài xế</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-hash"></i></span>
+                            <input value="@Model.IdTX" class="form-control bg-light" readonly />
+                        </div>
+                        <div class="text-muted small mt-1"><i class="bi bi-lock me-1"></i>Mã tài xế không thể thay đổi.</div>
+                    </div>
+
+                    <hr class="section-divider" />
+
+                    <!-- Thông tin cá nhân -->
+                    <div class="section-label"><i class="bi bi-person-fill text-success"></i> Thông tin cá nhân</div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="HoVaTen" class="form-label fw-semibold">Họ và tên</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
+                                <input asp-for="HoVaTen" class="form-control" />
+                            </div>
+                            <span asp-validation-for="HoVaTen" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="SDT" class="form-label fw-semibold">Số điện thoại</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-telephone-fill"></i></span>
+                                <input asp-for="SDT" class="form-control" />
+                            </div>
+                            <span asp-validation-for="SDT" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="NgaySinh" class="form-label fw-semibold">Ngày sinh</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
+                                <input asp-for="NgaySinh" type="date" class="form-control" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="LoaiXe" class="form-label fw-semibold">Loại xe</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-car-front-fill"></i></span>
+                                <select asp-for="LoaiXe" asp-items="Html.GetEnumSelectList<LoaiXe>()" class="form-select"></select>
+                            </div>
+                            <span asp-validation-for="LoaiXe" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="DiemDoi" class="form-label fw-semibold">Điểm đỗ</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-geo-alt-fill"></i></span>
+                            <input asp-for="DiemDoi" class="form-control" placeholder="Địa chỉ điểm đỗ xe (tuỳ chọn)" />
+                        </div>
+                    </div>
+
+                    <hr class="section-divider" />
+
+                    <!-- Trạng thái hoạt động -->
+                    <div class="section-label"><i class="bi bi-activity text-success"></i> Trạng thái hoạt động</div>
+                    <div class="status-options mb-4" id="statusOptions">
+                        <label class="status-option @(Model.TrangThaiHoatDong == "HoatDong" ? "active-hoat-dong" : "")"
+                               id="opt-hoat-dong" onclick="setStatus('HoatDong')">
+                            <input type="radio" />
+                            <div class="s-dot" style="background:#16a34a;"></div>
+                            <div class="s-label">Đang hoạt động</div>
+                        </label>
+                        <label class="status-option @(Model.TrangThaiHoatDong != "HoatDong" ? "active-nghi-viec" : "")"
+                               id="opt-nghi-viec" onclick="setStatus('NghiViec')">
+                            <input type="radio" />
+                            <div class="s-dot" style="background:#dc2626;"></div>
+                            <div class="s-label">Nghỉ việc</div>
+                        </label>
+                    </div>
+                    <input asp-for="TrangThaiHoatDong" type="hidden" id="trangThaiInput" />
+
+                    <hr class="section-divider" />
+
+                    <!-- Đặt lại mật khẩu -->
+                    <div class="reset-card">
+                        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                            <div>
+                                <div class="fw-bold text-dark">Đặt lại mật khẩu</div>
+                                <div class="text-muted small">Nhấn để mở ô nhập mật khẩu mới. Để trống nếu không muốn thay đổi.</div>
+                            </div>
+                            <button type="button" class="btn btn-outline-success" id="toggleResetPassword">
+                                <i class="bi bi-key-fill me-1"></i> Đặt lại mật khẩu
+                            </button>
+                        </div>
+
+                        <div class="d-none"><input asp-for="DatLaiMatKhau" /></div>
+
+                        <div id="passwordPanel" class="password-panel @(Model.DatLaiMatKhau ? "show" : "")">
+                            <div class="row g-3 mt-1">
+                                <div class="col-md-6">
+                                    <label asp-for="MatKhauMoi" class="form-label fw-semibold">Mật khẩu mới</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-key-fill"></i></span>
+                                        <input asp-for="MatKhauMoi" type="password" class="form-control" placeholder="Tối thiểu 6 ký tự" />
+                                    </div>
+                                    <span asp-validation-for="MatKhauMoi" class="text-danger small"></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <label asp-for="XacNhanMatKhauMoi" class="form-label fw-semibold">Xác nhận mật khẩu</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-shield-lock-fill"></i></span>
+                                        <input asp-for="XacNhanMatKhauMoi" type="password" class="form-control" placeholder="Nhập lại mật khẩu mới" />
+                                    </div>
+                                    <span asp-validation-for="XacNhanMatKhauMoi" class="text-danger small"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="action-row mt-4">
+                        <a asp-action="DetailsTX" asp-route-id="@Model.IdTX" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-1"></i> Quay lại chi tiết
+                        </a>
+                        <button type="submit" class="btn btn-success-custom">
+                            <i class="bi bi-check2-circle me-1"></i> Lưu thay đổi
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    <script>
+        // ── Trạng thái hoạt động picker ──
+        function setStatus(val) {
+            document.getElementById('trangThaiInput').value = val;
+            document.getElementById('opt-hoat-dong').className = 'status-option' + (val === 'HoatDong' ? ' active-hoat-dong' : '');
+            document.getElementById('opt-nghi-viec').className = 'status-option' + (val !== 'HoatDong' ? ' active-nghi-viec' : '');
+        }
+        // Init từ model
+        setStatus('@Model.TrangThaiHoatDong');
+
+        // ── Toggle reset password ──
+        const toggleBtn = document.getElementById('toggleResetPassword');
+        const checkbox  = document.getElementById('DatLaiMatKhau');
+        const panel     = document.getElementById('passwordPanel');
+
+        function syncPanel() {
+            const show = checkbox.checked;
+            panel.classList.toggle('show', show);
+            toggleBtn.classList.toggle('btn-success', show);
+            toggleBtn.classList.toggle('btn-outline-success', !show);
+            toggleBtn.innerHTML = show
+                ? '<i class="bi bi-eye-slash-fill me-1"></i> Ẩn đặt lại mật khẩu'
+                : '<i class="bi bi-key-fill me-1"></i> Đặt lại mật khẩu';
+        }
+        toggleBtn.addEventListener('click', () => { checkbox.checked = !checkbox.checked; syncPanel(); });
+        syncPanel();
+    </script>
+}

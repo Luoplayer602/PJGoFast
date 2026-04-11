@@ -1,6 +1,6 @@
-﻿@{
-    
-    ViewData["Title"] = "Home Page";
+﻿@using PJGoFast.Models.Enums
+@{
+    ViewData["Title"] = "Trang Chủ";
     var userAgent = Context.Request.Headers["User-Agent"].ToString().ToLower();
     
     // Nhận diện các từ khóa phổ biến của thiết bị di động
@@ -19,19 +19,203 @@
     }
 }
 
-<div>
-    <div id="QuickChuyenDiBox">
-        <form method="post" asp-controller="Home" asp-action="taoChuyenDiWDiemDen">
-            <div id="iconHolder">
-                <img />
-            </div>
-            <div>
-                <input type="text" name="diemDen" id="diemDen" placeholder="Bạn muốn đi đâu?" />
-            </div>
-            <div>
-                <button type="submit">Đi</button>
-            </div>
-        </form>
-    </div>
-</div>
+<style>
+    /* Box nhập điểm đến */
+    .search-destination-box {
+        background: #fff;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        padding: 20px;
+        margin-top: 20px;
+    }
 
+    .search-input-group {
+        display: flex;
+        align-items: center;
+        background: #f8fafc;
+        border-radius: 16px;
+        padding: 8px 16px;
+        border: 1px solid #e2e8f0;
+    }
+
+        .search-input-group input {
+            border: none;
+            background: transparent;
+            outline: none;
+            flex: 1;
+            padding: 10px;
+            font-size: 1.1rem;
+        }
+
+        .search-input-group button {
+            border-radius: 12px;
+            padding: 10px 24px;
+            font-weight: bold;
+        }
+
+    /* Box chọn nhanh loại xe */
+    .vehicle-btn {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 16px 10px;
+        transition: all 0.2s ease;
+        text-align: center;
+        color: #475569;
+    }
+
+        .vehicle-btn:hover {
+            background: #eff6ff;
+            border-color: #3b82f6;
+            color: #1d4ed8;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.15);
+        }
+
+        .vehicle-btn i {
+            font-size: 2rem;
+            margin-bottom: 8px;
+            color: #3b82f6;
+        }
+
+    /* Banner News Carousel */
+    .news-banner-box {
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        height: 250px; /* Chiều cao cố định của banner */
+    }
+
+        .news-banner-box .carousel-item {
+            height: 250px;
+            background: linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%); /* Nền mặc định nếu ko có ảnh */
+        }
+
+        .news-banner-box img {
+            object-fit: cover;
+            width: 100%;
+            height: 100%;
+        }
+
+    .carousel-caption-custom {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 40px 20px 20px 20px;
+        background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%);
+        text-align: left;
+    }
+
+        .carousel-caption-custom h5 {
+            color: #fff;
+            font-weight: bold;
+            margin: 0;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+        }
+</style>
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+
+            <div id="QuickChuyenDiBox" class="search-destination-box mb-4">
+                <h5 class="fw-bold mb-3"><i class="bi bi-geo-alt-fill text-danger me-2"></i>Bạn muốn đi đâu?</h5>
+                <form method="post" asp-controller="Home" asp-action="taoChuyenDiWDiemDen">
+                    <div class="search-input-group">
+                        <div id="iconHolder" class="text-secondary fs-4 me-2">
+                            <i class="bi bi-search"></i>
+                        </div>
+                        <input type="text" name="diemDen" id="diemDen" placeholder="Nhập địa điểm bạn muốn đến..." required />
+                        <button type="submit" class="btn btn-primary shadow-sm">Đi ngay</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="mb-5">
+                <h5 class="fw-bold mb-3"><i class="bi bi-car-front-fill text-primary me-2"></i>Chọn loại xe nhanh</h5>
+                
+                <form method="post" asp-controller="Home" asp-action="taoChuyenDiWVehicle">
+                    <div class="row g-3">
+                        <div class="col-4 col-md-2">
+                            <button type="submit" name="loaiXe" value="@LoaiXe.XeMay" class="btn vehicle-btn w-100">
+                                <i class="bi bi-bicycle d-block"></i>
+                                <span class="fw-semibold small">Xe máy</span>
+                            </button>
+                        </div>
+                        <div class="col-4 col-md-2">
+                            <button type="submit" name="loaiXe" value="@LoaiXe.Sedan" class="btn vehicle-btn w-100">
+                                <i class="bi bi-car-front d-block"></i>
+                                <span class="fw-semibold small">Sedan</span>
+                            </button>
+                        </div>
+                        <div class="col-4 col-md-2">
+                            <button type="submit" name="loaiXe" value="@LoaiXe.SUV" class="btn vehicle-btn w-100">
+                                <i class="bi bi-suv d-block"></i> <span class="fw-semibold small">SUV</span>
+                            </button>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <button type="submit" name="loaiXe" value="@LoaiXe.BayCho" class="btn vehicle-btn w-100">
+                                <i class="bi bi-car-front-fill d-block"></i>
+                                <span class="fw-semibold small">Bảy Chỗ</span>
+                            </button>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <button type="submit" name="loaiXe" value="@LoaiXe.TaiNho" class="btn vehicle-btn w-100">
+                                <i class="bi bi-truck d-block"></i>
+                                <span class="fw-semibold small">Tải Nhỏ</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="mb-4">
+                <h5 class="fw-bold mb-3"><i class="bi bi-newspaper text-success me-2"></i>Tin tức & Ưu đãi</h5>
+                
+                <div id="newsCarousel" class="carousel slide news-banner-box" data-bs-ride="carousel" data-bs-interval="5000">
+                    <div class="carousel-indicators">
+                        <button type="button" data-bs-target="#newsCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+                        <button type="button" data-bs-target="#newsCarousel" data-bs-slide-to="1" aria-label="Slide 2"></button>
+                        <button type="button" data-bs-target="#newsCarousel" data-bs-slide-to="2" aria-label="Slide 3"></button>
+                    </div>
+
+                    <div class="carousel-inner">
+                        
+                        <div class="carousel-item active">
+                            <img src="~/images/demo1.jpg" alt="demo1" onerror="this.style.display='none'">
+                                <div class="carousel-caption-custom">
+                                    <h5>demo1</h5>
+                                </div>
+                            </div>
+
+                            <div class="carousel-item">
+                                <img src="~/images/demo2.jpg" alt="demo2" onerror="this.style.display='none'">
+                                    <div class="carousel-caption-custom">
+                                        <h5>demo2</h5>
+                                    </div>
+                                </div>
+
+                                <div class="carousel-item">
+                                    <img src="~/images/demo3.jpg" alt="demo3" onerror="this.style.display='none'">
+                                        <div class="carousel-caption-custom">
+                                            <h5>demo3</h5>
+                                        </div>
+                                    </div>
+
+                                </div>
+                    
+                                <button class="carousel-control-prev" type="button" data-bs-target="#newsCarousel" data-bs-slide="prev">
+                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Previous</span>
+                                </button>
+                                <button class="carousel-control-next" type="button" data-bs-target="#newsCarousel" data-bs-slide="next">
+                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Next</span>
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>

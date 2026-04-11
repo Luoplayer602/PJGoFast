@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PJGoFast.Models;
+using PJGoFast.Models.Enums;
 using PJGoFast.Services.Interfaces;
 using PJGoFast.ViewModels;
 using System.Diagnostics;
@@ -84,6 +85,20 @@ namespace PJGoFast.Controllers
             };
             return View("taoChuyenDi", model);
         }
+
+        [HttpPost]
+        public IActionResult taoChuyenDiWVehicle(LoaiXe loaiXe)
+        {
+            var model = new ChuyenDiCreateVM
+            {
+                IdKH = User.FindFirstValue(ClaimTypes.Name),
+                LoaiXeYeuCau = loaiXe
+            };
+            return View("taoChuyenDi", model);
+        }
+
+
+
 
         // ─── Báo giá (basic) ─────────────────────────────────────────────────
         [HttpGet]

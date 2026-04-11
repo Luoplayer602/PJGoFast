@@ -202,14 +202,20 @@
             </a>
 
             <nav class="admin-nav">
+                <a asp-controller="Admin" asp-action="AdminMenu"
+                       class="admin-nav-link @(currentAction == "AdminMenu" ? "active" : "")">
+                    <i class="bi bi-speedometer2 me-1"></i> Trung tâm quản trị
+                </a>
                 <a asp-controller="Admin" asp-action="Index"
                    class="admin-nav-link @(currentAction == "Index" || currentAction == "Details" ? "active" : "")">
                     <i class="bi bi-people-fill me-1"></i> Danh sách admin
                 </a>
-                <a asp-controller="Admin" asp-action="Create"
-                   class="admin-nav-link @(currentAction == "Create" ? "active" : "")">
-                    <i class="bi bi-person-plus-fill me-1"></i> Thêm admin
+                
+                <a asp-controller="TaiXeMNG" asp-action="IndexTX"
+                class="admin-nav-link @(currentAction == "IndexTX" || currentAction == "DetailsTX" ? "active" : "")">
+                    <i class="bi bi-car-front-fill me-1"></i> Danh sách tài xế
                 </a>
+                
             </nav>
 
             <div class="admin-user">

@@ -22,12 +22,15 @@ namespace PJGoFast.Controllers
 
         private readonly IAdminService _adminService;
 
-        public LoginController(ILogger<LoginController> logger, IKhachHangService khachHangService, PJGoFastDbContext context, IAdminService adminService)
+        private readonly ITaiXeService _taiXeService;
+
+        public LoginController(ILogger<LoginController> logger, IKhachHangService khachHangService, PJGoFastDbContext context, IAdminService adminService, ITaiXeService taiXeService)
         {
             _logger = logger;
             _khachHangService = khachHangService;
             _context = context;
             _adminService = adminService;
+            _taiXeService = taiXeService;
         }
 
         [HttpGet]
@@ -118,7 +121,7 @@ namespace PJGoFast.Controllers
         {
             if (User.IsInRole("QuanTri"))
             {
-                return RedirectToAction("Index", "Admin");
+                return RedirectToAction("AdminMenu", "Admin");
             }
             else if (User.IsInRole("DieuPhoi"))
             {
@@ -162,5 +165,36 @@ namespace PJGoFast.Controllers
                 return RedirectToAction("Index", "DieuPhoi");
             }    
         }
+
+
+        public IActionResult TaiXe()
+        {
+            if (User.IsInRole("TaiXe"))
+            {
+                return RedirectToAction("Index", "TaiXe");
+            }
+            return View();
+        }
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> TaiXe(string sdt, string matKhau)
+        {
+            var principal = _taiXeService.KiemTraDangNhap(sdt, matKhau);
+
+            if (principal == null)
+            {
+                ViewBag.Error = "Sai tài khoản hoặc mật khẩu";
+                return View();
+            }
+
+            await HttpContext.SignInAsync(principal);
+
+            return RedirectToAction("Index", "TaiXe"); // chuyển về trang tài xế
+        }
+
+
+
     }
 }

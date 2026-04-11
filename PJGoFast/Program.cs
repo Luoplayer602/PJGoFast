@@ -11,6 +11,7 @@ builder.Services.AddDetection();
 builder.Services.AddScoped<IKhachHangService, KhachHangService>();
 builder.Services.AddScoped<IChuyenDiService, ChuyenDiService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<ITaiXeService, TaiXeService>();
 builder.Services.AddControllersWithViews();
 builder.Services.AddHttpClient();
 builder.Services.AddDbContext<PJGoFastDbContext>(options =>
