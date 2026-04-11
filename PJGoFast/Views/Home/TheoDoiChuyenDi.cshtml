@@ -1,0 +1,254 @@
+@model KhachHangTripTrackingVM
+@using System.Text.Json
+
+@{
+    ViewData["Title"] = "Theo dõi chuyến";
+    var userAgent = Context.Request.Headers["User-Agent"].ToString().ToLower();
+    var isMobile = userAgent.Contains("mobi") || userAgent.Contains("android") || userAgent.Contains("iphone");
+    Layout = isMobile ? "_LayoutMobile" : "_Layout";
+}
+
+<style>
+    .tracking-page {
+        display: grid;
+        grid-template-columns: minmax(0, 1.2fr) minmax(280px, .8fr);
+        gap: 18px;
+    }
+
+    .tracking-card {
+        background: #fff;
+        border-radius: 24px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 10px 28px rgba(15,23,42,.06);
+        overflow: hidden;
+    }
+
+    .tracking-hero {
+        background: linear-gradient(160deg, #0f172a, #1d4ed8 72%, #60a5fa);
+        color: #fff;
+        padding: 24px;
+    }
+
+    .tracking-hero h1 {
+        margin: 0 0 6px;
+        font-size: 1.5rem;
+        font-weight: 800;
+    }
+
+    .hero-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(255,255,255,.14);
+        border: 1px solid rgba(255,255,255,.18);
+        font-size: .8rem;
+        font-weight: 700;
+        margin: 12px 8px 0 0;
+    }
+
+    .tracking-body {
+        padding: 22px 24px;
+        display: grid;
+        gap: 18px;
+    }
+
+    .info-block {
+        background: #f8fbff;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        padding: 18px;
+    }
+
+    .info-block h2 {
+        margin: 0 0 12px;
+        font-size: .84rem;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: #64748b;
+        font-weight: 800;
+    }
+
+    .info-item + .info-item {
+        margin-top: 10px;
+    }
+
+    .info-item small {
+        display: block;
+        color: #94a3b8;
+        margin-bottom: 3px;
+    }
+
+    .info-item strong {
+        display: block;
+        line-height: 1.45;
+        color: #0f172a;
+    }
+
+    .log-item,
+    .trip-item {
+        padding: 12px 14px;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        background: #fff;
+    }
+
+    .trip-item {
+        cursor: pointer;
+        transition: .15s ease;
+    }
+
+    .trip-item:hover,
+    .trip-item.active {
+        border-color: #93c5fd;
+        box-shadow: 0 12px 24px rgba(37,99,235,.10);
+    }
+
+    .log-item small,
+    .trip-item small {
+        display: block;
+        margin-top: 4px;
+        color: #94a3b8;
+    }
+
+    @@media (max-width: 992px) {
+        .tracking-page {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="tracking-page">
+    <section class="tracking-card">
+        <div class="tracking-hero">
+            <h1>Theo dõi chuyến đang xử lý</h1>
+            <div id="trackingSummary">Cập nhật theo thời gian thực trạng thái, tài xế, điều phối và nhật ký của chuyến đang chạy.</div>
+            <div id="heroChips"></div>
+        </div>
+        <div class="tracking-body" id="trackingDetail"></div>
+    </section>
+
+    <section class="tracking-card">
+        <div class="tracking-body">
+            <div class="info-block">
+                <h2>Danh sách chuyến đang xử lý</h2>
+                <div id="trackingTrips"></div>
+            </div>
+            <div class="info-block">
+                <h2>Nhật ký trực tiếp</h2>
+                <div id="trackingLogs"></div>
+            </div>
+        </div>
+    </section>
+</div>
+
+@section Scripts {
+<script>
+    let trackingData = @Html.Raw(JsonSerializer.Serialize(Model, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
+    let selectedTripId = trackingData.chuyenDangTheoDoi?.idChuyenDi || null;
+
+    function fmtDate(value) {
+        return value ? new Date(value).toLocaleString('vi-VN') : '';
+    }
+
+    function fmtMoney(value) {
+        return value == null ? '0 đ' : `${Number(value).toLocaleString('vi-VN')} đ`;
+    }
+
+    function renderTrips() {
+        const trips = trackingData.chuyenDangXuLy || [];
+        document.getElementById('trackingTrips').innerHTML = trips.length
+            ? trips.map(trip => `
+                <div class="trip-item ${selectedTripId === trip.idChuyenDi ? 'active' : ''}" onclick="selectTrip('${trip.idChuyenDi}')">
+                    <strong>${trip.idChuyenDi}</strong>
+                    <div>${trip.diemDon} → ${trip.diemDen}</div>
+                    <small>${trip.trangThai} · ${fmtDate(trip.thoiGianDon)}</small>
+                </div>`).join('')
+            : '<div class="log-item">Không có chuyến đang xử lý.</div>';
+    }
+
+    function renderDetail() {
+        const trip = selectedTripId
+            ? (trackingData.chuyenDangXuLy || []).find(x => x.idChuyenDi === selectedTripId) || trackingData.chuyenDangTheoDoi
+            : trackingData.chuyenDangTheoDoi;
+
+        const detail = document.getElementById('trackingDetail');
+        const chips = document.getElementById('heroChips');
+        const summary = document.getElementById('trackingSummary');
+
+        if (!trip) {
+            summary.textContent = 'Hiện chưa có chuyến nào để theo dõi.';
+            chips.innerHTML = '';
+            detail.innerHTML = '<div class="info-block"><h2>Thông tin</h2><div class="log-item">Không có chuyến đang hoạt động.</div></div>';
+            return;
+        }
+
+        summary.textContent = `Đang theo dõi chuyến ${trip.idChuyenDi}.`;
+        chips.innerHTML = `
+            <span class="hero-chip"><i class="bi bi-flag"></i>${trip.trangThai}</span>
+            <span class="hero-chip"><i class="bi bi-person-badge"></i>${trip.taiXe?.hoVaTen || 'Chưa có tài xế'}</span>
+            <span class="hero-chip"><i class="bi bi-diagram-3"></i>${trip.admin?.hoVaTen || 'Chưa có điều phối'}</span>`;
+
+        detail.innerHTML = `
+            <div class="info-block">
+                <h2>Lộ trình</h2>
+                <div class="info-item"><small>Điểm đón</small><strong>${trip.diemDon}</strong></div>
+                <div class="info-item"><small>Điểm đến</small><strong>${trip.diemDen}</strong></div>
+                <div class="info-item"><small>Thời gian đón</small><strong>${fmtDate(trip.thoiGianDon)}</strong></div>
+                <div class="info-item"><small>Giá tạm tính</small><strong>${fmtMoney(trip.giaTamTinh)}</strong></div>
+            </div>
+            <div class="info-block">
+                <h2>Tài xế và điều phối</h2>
+                <div class="info-item"><small>Tài xế</small><strong>${trip.taiXe?.hoVaTen || 'Chưa có'} ${trip.taiXe?.sdt ? '· ' + trip.taiXe.sdt : ''}</strong></div>
+                <div class="info-item"><small>Mã tài xế</small><strong>${trip.taiXe?.id || 'Chưa có'}</strong></div>
+                <div class="info-item"><small>Điều phối</small><strong>${trip.admin?.hoVaTen || 'Chưa có'} ${trip.admin?.sdt ? '· ' + trip.admin.sdt : ''}</strong></div>
+                <div class="info-item"><small>Mã điều phối</small><strong>${trip.admin?.id || 'Chưa có'}</strong></div>
+            </div>
+            <div class="info-block">
+                <h2>Đi nhanh</h2>
+                <a class="btn btn-primary rounded-4 fw-bold" href="/Home/ChiTietChuyenDi?IdChuyenDi=${trip.idChuyenDi}">
+                    <i class="bi bi-eye me-1"></i> Mở chi tiết chuyến
+                </a>
+            </div>`;
+    }
+
+    function renderLogs() {
+        const logs = trackingData.logs || [];
+        document.getElementById('trackingLogs').innerHTML = logs.length
+            ? logs.map(log => `<div class="log-item">${log.logText}<small>${fmtDate(log.thoiGian)}</small></div>`).join('')
+            : '<div class="log-item">Chưa có nhật ký.</div>';
+    }
+
+    function selectTrip(id) {
+        selectedTripId = id;
+        refreshTracking();
+    }
+
+    async function refreshTracking() {
+        try {
+            const url = selectedTripId
+                ? `@Url.Action("TheoDoiChuyenDiData", "Home")?IdChuyenDi=${selectedTripId}`
+                : '@Url.Action("TheoDoiChuyenDiData", "Home")';
+            const response = await fetch(url, { cache: 'no-store' });
+            const payload = await response.json();
+            if (!payload.success) return;
+            trackingData = {
+                chuyenDangTheoDoi: payload.trip,
+                chuyenDangXuLy: payload.trips,
+                logs: payload.logs
+            };
+            if (!selectedTripId && payload.trip) selectedTripId = payload.trip.idChuyenDi;
+            renderTrips();
+            renderDetail();
+            renderLogs();
+        } catch {
+        }
+    }
+
+    renderTrips();
+    renderDetail();
+    renderLogs();
+    setInterval(refreshTracking, 7000);
+</script>
+}

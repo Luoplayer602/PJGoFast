@@ -190,6 +190,7 @@
 <body>
     @{
         var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? string.Empty;
+        var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
     }
     <header class="admin-topbar">
         <div class="admin-topbar-inner">
@@ -202,20 +203,18 @@
             </a>
 
             <nav class="admin-nav">
-                <a asp-controller="Admin" asp-action="AdminMenu"
-                       class="admin-nav-link @(currentAction == "AdminMenu" ? "active" : "")">
+                <a asp-controller="Admin" asp-action="AdminMenu" class="admin-nav-link @(currentController == "Admin" && currentAction == "AdminMenu" ? "active" : "")">
                     <i class="bi bi-speedometer2 me-1"></i> Trung tâm quản trị
                 </a>
-                <a asp-controller="Admin" asp-action="Index"
-                   class="admin-nav-link @(currentAction == "Index" || currentAction == "Details" ? "active" : "")">
+                <a asp-controller="Admin" asp-action="Index" class="admin-nav-link @(currentController == "Admin" && (currentAction == "Index" || currentAction == "Details") ? "active" : "")">
                     <i class="bi bi-people-fill me-1"></i> Danh sách admin
                 </a>
-                
-                <a asp-controller="TaiXeMNG" asp-action="IndexTX"
-                class="admin-nav-link @(currentAction == "IndexTX" || currentAction == "DetailsTX" ? "active" : "")">
+                <a asp-controller="DieuPhoi" asp-action="Index" class="admin-nav-link @(currentController == "DieuPhoi" ? "active" : "")">
+                    <i class="bi bi-diagram-3-fill me-1"></i> Điều phối
+                </a>
+                <a asp-controller="TaiXeMNG" asp-action="IndexTX" class="admin-nav-link @(currentController == "TaiXeMNG" && (currentAction == "IndexTX" || currentAction == "DetailsTX") ? "active" : "")">
                     <i class="bi bi-car-front-fill me-1"></i> Danh sách tài xế
                 </a>
-                
             </nav>
 
             <div class="admin-user">

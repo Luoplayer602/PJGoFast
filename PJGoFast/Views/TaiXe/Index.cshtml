@@ -1,0 +1,821 @@
+@model TaiXeDashboardVM
+@using System.Text.Json
+
+@{
+    ViewData["Title"] = "Nhận chuyến";
+    var userAgent = Context.Request.Headers["User-Agent"].ToString().ToLower();
+    var isMobile = userAgent.Contains("mobi") || userAgent.Contains("android") || userAgent.Contains("iphone");
+    Layout = isMobile ? "_LayoutTaiXeMobile" : "_LayoutTaiXe";
+}
+
+@functions {
+    string StatusText(PJGoFast.Models.Enums.TrangThaiChuyen status) => status switch
+    {
+        PJGoFast.Models.Enums.TrangThaiChuyen.CHO => "Chờ báo giá",
+        PJGoFast.Models.Enums.TrangThaiChuyen.MOI => "Mới",
+        PJGoFast.Models.Enums.TrangThaiChuyen.DA_PHAN_CONG => "Đã phân công",
+        PJGoFast.Models.Enums.TrangThaiChuyen.DA_NHAN => "Đã nhận",
+        PJGoFast.Models.Enums.TrangThaiChuyen.DANG_DON => "Đang đón",
+        PJGoFast.Models.Enums.TrangThaiChuyen.DA_DON => "Đã đón",
+        PJGoFast.Models.Enums.TrangThaiChuyen.DANG_DI_CHUYEN => "Đang di chuyển",
+        PJGoFast.Models.Enums.TrangThaiChuyen.HOAN_TAT => "Hoàn tất",
+        PJGoFast.Models.Enums.TrangThaiChuyen.HUY => "Hủy",
+        _ => status.ToString()
+    };
+}
+
+<style>
+    .driver-shell {
+        display: grid;
+        grid-template-columns: minmax(0, 1.6fr) minmax(320px, .95fr);
+        gap: 18px;
+    }
+
+    .driver-column {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+    }
+
+    .hero-card {
+        background: linear-gradient(160deg, #0f172a 0%, #1d4ed8 65%, #3b82f6 100%);
+        color: #fff;
+        border-radius: 28px;
+        padding: 24px;
+        box-shadow: 0 22px 48px rgba(37,99,235,.18);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero-card::after {
+        content: "";
+        position: absolute;
+        right: -80px;
+        top: -80px;
+        width: 220px;
+        height: 220px;
+        background: radial-gradient(circle, rgba(255,255,255,.18), transparent 70%);
+    }
+
+    .hero-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: flex-start;
+    }
+
+    .hero-meta h1 {
+        margin: 0 0 6px;
+        font-size: clamp(1.35rem, 2vw, 1.9rem);
+        font-weight: 800;
+    }
+
+    .hero-meta p {
+        margin: 0;
+        max-width: 540px;
+        color: rgba(255,255,255,.82);
+    }
+
+    .hero-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 16px;
+    }
+
+    .hero-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        border-radius: 999px;
+        background: rgba(255,255,255,.14);
+        border: 1px solid rgba(255,255,255,.16);
+        font-size: .82rem;
+        font-weight: 700;
+    }
+
+    .status-switch {
+        background: rgba(255,255,255,.12);
+        border: 1px solid rgba(255,255,255,.18);
+        padding: 10px;
+        border-radius: 22px;
+        display: inline-flex;
+        gap: 8px;
+        backdrop-filter: blur(8px);
+    }
+
+    .status-switch button {
+        border: none;
+        border-radius: 999px;
+        padding: 10px 16px;
+        font-weight: 800;
+        font-size: .82rem;
+        color: #fff;
+        opacity: .65;
+        transition: .15s ease;
+    }
+
+    .status-switch button.active {
+        opacity: 1;
+        box-shadow: 0 8px 18px rgba(15,23,42,.18);
+    }
+
+    .status-switch .btn-online { background: #16a34a; }
+    .status-switch .btn-busy { background: #f59e0b; cursor: default; }
+    .status-switch .btn-offline { background: #dc2626; }
+
+    .panel-card {
+        background: #fff;
+        border-radius: 24px;
+        box-shadow: 0 10px 28px rgba(15,23,42,.06);
+        border: 1px solid #e2e8f0;
+    }
+
+    .panel-head {
+        padding: 18px 20px 14px;
+        border-bottom: 1px solid #eef2f7;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .panel-head h2 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 800;
+    }
+
+    .panel-head span {
+        color: #64748b;
+        font-size: .84rem;
+    }
+
+    .trip-list {
+        padding: 18px;
+        display: grid;
+        gap: 12px;
+        max-height: 620px;
+        overflow: auto;
+    }
+
+    .trip-card {
+        border-radius: 18px;
+        border: 1px solid #dbe4f0;
+        padding: 16px;
+        background: #f8fbff;
+        cursor: pointer;
+        transition: .15s ease;
+    }
+
+    .trip-card:hover,
+    .trip-card.active {
+        border-color: #93c5fd;
+        box-shadow: 0 14px 26px rgba(37,99,235,.10);
+        transform: translateY(-1px);
+    }
+
+    .trip-card.assigned {
+        background: linear-gradient(160deg, #eff6ff, #f8fafc);
+        border-color: #93c5fd;
+    }
+
+    .trip-card-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+
+    .trip-id {
+        font-family: Consolas, monospace;
+        font-size: .82rem;
+        color: #334155;
+        font-weight: 700;
+    }
+
+    .trip-status {
+        padding: 5px 10px;
+        border-radius: 999px;
+        font-size: .72rem;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .trip-status.moi { background: #dbeafe; color: #1d4ed8; }
+    .trip-status.da-phan-cong { background: #dbeafe; color: #1d4ed8; }
+    .trip-status.da-nhan { background: #dcfce7; color: #15803d; }
+    .trip-status.dang-don { background: #ffedd5; color: #c2410c; }
+    .trip-status.da-don { background: #ffedd5; color: #c2410c; }
+    .trip-status.dang-di-chuyen { background: #ede9fe; color: #6d28d9; }
+    .trip-status.hoan-tat { background: #dcfce7; color: #15803d; }
+    .trip-status.huy { background: #fee2e2; color: #b91c1c; }
+    .trip-status.cho { background: #fef3c7; color: #92400e; }
+
+    .trip-route {
+        display: grid;
+        gap: 10px;
+        margin-bottom: 12px;
+    }
+
+    .trip-route-item {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+    }
+
+    .trip-route-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-top: 5px;
+        flex-shrink: 0;
+    }
+
+    .trip-route-item small {
+        display: block;
+        color: #94a3b8;
+        font-size: .7rem;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        margin-bottom: 2px;
+    }
+
+    .trip-route-item strong {
+        display: block;
+        line-height: 1.4;
+        font-size: .92rem;
+        color: #0f172a;
+    }
+
+    .trip-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        color: #475569;
+        font-size: .82rem;
+        flex-wrap: wrap;
+    }
+
+    .trip-timer {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        background: #fff7ed;
+        color: #c2410c;
+        border-radius: 999px;
+        font-weight: 800;
+    }
+
+    .detail-card {
+        position: sticky;
+        top: 96px;
+        overflow: hidden;
+    }
+
+    .detail-empty {
+        padding: 48px 24px;
+        text-align: center;
+        color: #94a3b8;
+    }
+
+    .detail-empty i {
+        font-size: 2.6rem;
+        display: block;
+        margin-bottom: 14px;
+    }
+
+    .detail-body {
+        padding: 20px;
+        display: grid;
+        gap: 18px;
+    }
+
+    .detail-block {
+        background: #f8fbff;
+        border-radius: 18px;
+        padding: 16px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .detail-block h3 {
+        margin: 0 0 12px;
+        font-size: .82rem;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        color: #64748b;
+        font-weight: 800;
+    }
+
+    .detail-grid {
+        display: grid;
+        gap: 10px;
+    }
+
+    .detail-item small {
+        display: block;
+        color: #94a3b8;
+        margin-bottom: 2px;
+    }
+
+    .detail-item strong {
+        color: #0f172a;
+        line-height: 1.45;
+    }
+
+    .detail-actions {
+        display: grid;
+        gap: 10px;
+    }
+
+    .detail-actions .btn {
+        border-radius: 16px;
+        padding: 12px 16px;
+        font-weight: 800;
+    }
+
+    .active-trip-banner {
+        background: linear-gradient(145deg, #ecfdf5, #f8fafc);
+        border: 1px solid #bbf7d0;
+        border-radius: 22px;
+        padding: 18px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .active-trip-banner strong {
+        display: block;
+        font-size: 1rem;
+        margin-bottom: 4px;
+    }
+
+    .notify-list {
+        padding: 0 18px 18px;
+        display: grid;
+        gap: 10px;
+    }
+
+    .notify-item {
+        padding: 12px 14px;
+        border-radius: 16px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        font-size: .84rem;
+        color: #334155;
+    }
+
+    .notify-item small {
+        display: block;
+        margin-top: 4px;
+        color: #94a3b8;
+    }
+
+    @@media (max-width: 992px) {
+        .driver-shell {
+            grid-template-columns: 1fr;
+        }
+
+        .detail-card {
+            position: static;
+        }
+
+        .hero-top {
+            flex-direction: column;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .hero-card,
+        .panel-card {
+            border-radius: 20px;
+        }
+
+        .status-switch {
+            width: 100%;
+            justify-content: stretch;
+        }
+
+        .status-switch button {
+            flex: 1;
+        }
+    }
+</style>
+
+<div class="driver-column">
+    <section class="hero-card">
+        <div class="hero-top">
+            <div class="hero-meta">
+                <h1>Nhận chuyến và phản hồi điều phối</h1>
+                <p>Danh sách luôn ưu tiên chuyến được phân công. Khi đã có chuyến đang chạy, các chuyến khác vẫn xem được nhưng không thể nhận thêm.</p>
+                <div class="hero-badges">
+                    <span class="hero-chip"><i class="bi bi-person-badge"></i>@Model.HoVaTen</span>
+                    <span class="hero-chip"><i class="bi bi-telephone"></i>@Model.SDT</span>
+                    <span class="hero-chip"><i class="bi bi-car-front"></i>@Model.LoaiXe</span>
+                    @if (!string.IsNullOrWhiteSpace(Model.DiemDoi))
+                    {
+                        <span class="hero-chip"><i class="bi bi-geo-alt"></i>@Model.DiemDoi</span>
+                    }
+                </div>
+            </div>
+
+            <form asp-action="CapNhatTrangThaiOnline" method="post">
+                @Html.AntiForgeryToken()
+                <div class="status-switch">
+                    <button type="submit" name="trangThai" value="ONLINE" class="btn-online @(Model.TrangThaiOnline == PJGoFast.Models.Enums.TrangThaiOnline.ONLINE ? "active" : "")">
+                        Online
+                    </button>
+                    <button type="button" class="btn-busy @(Model.TrangThaiOnline == PJGoFast.Models.Enums.TrangThaiOnline.BUSY ? "active" : "")">
+                        Busy
+                    </button>
+                    <button type="submit" name="trangThai" value="OFFLINE" class="btn-offline @(Model.TrangThaiOnline == PJGoFast.Models.Enums.TrangThaiOnline.OFFLINE ? "active" : "")">
+                        Offline
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    @if (Model.ChuyenDangThucHien != null)
+    {
+        <div class="active-trip-banner">
+            <div>
+                <strong>Đang có chuyến hoạt động</strong>
+                <span>Mã chuyến @Model.ChuyenDangThucHien.IdChuyenDi · @StatusText(Model.ChuyenDangThucHien.TrangThai)</span>
+            </div>
+            <a asp-action="TienTrinh" asp-route-idChuyenDi="@Model.ChuyenDangThucHien.IdChuyenDi" class="btn btn-success">
+                <i class="bi bi-arrow-right-circle me-1"></i> Vào tiến trình
+            </a>
+        </div>
+    }
+</div>
+
+<div class="driver-shell">
+    <div class="driver-column">
+        <section class="panel-card">
+            <div class="panel-head">
+                <div>
+                    <h2>Chuyến được phân công</h2>
+                    <span>Ưu tiên hiển thị trước, hết 2 phút sẽ tự động biến mất.</span>
+                </div>
+                <span id="assignedCount">@Model.ChuyenDuocPhanCong.Count</span>
+            </div>
+            <div class="trip-list" id="assignedTrips">
+                @if (!Model.ChuyenDuocPhanCong.Any())
+                {
+                    <div class="notify-item">Hiện chưa có chuyến nào được điều phối trực tiếp cho bạn.</div>
+                }
+                else
+                {
+                    foreach (var trip in Model.ChuyenDuocPhanCong)
+                    {
+                        <article class="trip-card assigned" data-trip-id="@trip.IdChuyenDi" onclick="selectTrip('@trip.IdChuyenDi')">
+                            <div class="trip-card-head">
+                                <div>
+                                    <div class="trip-id">@trip.IdChuyenDi</div>
+                                    <small class="text-muted">Khách: @trip.KhachHang?.HoVaTen</small>
+                                </div>
+                                <span class="trip-status da-phan-cong">@StatusText(trip.TrangThai)</span>
+                            </div>
+                            <div class="trip-route">
+                                <div class="trip-route-item">
+                                    <span class="trip-route-dot" style="background:#16a34a;"></span>
+                                    <div><small>Điểm đón</small><strong>@trip.DiemDon</strong></div>
+                                </div>
+                                <div class="trip-route-item">
+                                    <span class="trip-route-dot" style="background:#dc2626;"></span>
+                                    <div><small>Điểm đến</small><strong>@trip.DiemDen</strong></div>
+                                </div>
+                            </div>
+                            <div class="trip-footer">
+                                <span><i class="bi bi-clock me-1"></i>@trip.ThoiGianDon.ToString("HH:mm dd/MM/yyyy")</span>
+                                <span class="trip-timer"><i class="bi bi-hourglass-split"></i><span data-seconds="@trip.RemainingSeconds">@trip.RemainingSeconds giây</span></span>
+                            </div>
+                        </article>
+                    }
+                }
+            </div>
+        </section>
+
+        <section class="panel-card">
+            <div class="panel-head">
+                <div>
+                    <h2>Chuyến mới có thể nhận</h2>
+                    <span>Danh sách cập nhật tự động, chỉ hiện chuyến phù hợp với loại xe của bạn.</span>
+                </div>
+                <span id="openCount">@Model.ChuyenMoi.Count</span>
+            </div>
+            <div class="trip-list" id="openTrips">
+                @if (!Model.ChuyenMoi.Any())
+                {
+                    <div class="notify-item">Chưa có chuyến mới phù hợp trong lúc này.</div>
+                }
+                else
+                {
+                    foreach (var trip in Model.ChuyenMoi)
+                    {
+                        <article class="trip-card" data-trip-id="@trip.IdChuyenDi" onclick="selectTrip('@trip.IdChuyenDi')">
+                            <div class="trip-card-head">
+                                <div>
+                                    <div class="trip-id">@trip.IdChuyenDi</div>
+                                    <small class="text-muted">Khách: @trip.KhachHang?.HoVaTen</small>
+                                </div>
+                                <span class="trip-status moi">@StatusText(trip.TrangThai)</span>
+                            </div>
+                            <div class="trip-route">
+                                <div class="trip-route-item">
+                                    <span class="trip-route-dot" style="background:#16a34a;"></span>
+                                    <div><small>Điểm đón</small><strong>@trip.DiemDon</strong></div>
+                                </div>
+                                <div class="trip-route-item">
+                                    <span class="trip-route-dot" style="background:#dc2626;"></span>
+                                    <div><small>Điểm đến</small><strong>@trip.DiemDen</strong></div>
+                                </div>
+                            </div>
+                            <div class="trip-footer">
+                                <span><i class="bi bi-clock me-1"></i>@trip.ThoiGianDon.ToString("HH:mm dd/MM/yyyy")</span>
+                                <span><i class="bi bi-cash-stack me-1"></i>@(trip.GiaTamTinh?.ToString("N0") ?? "0") đ</span>
+                            </div>
+                        </article>
+                    }
+                }
+            </div>
+        </section>
+    </div>
+
+    <div class="driver-column">
+        <section class="panel-card detail-card">
+            <div class="panel-head">
+                <div>
+                    <h2>Chi tiết chuyến</h2>
+                    <span>Xem nhanh trước khi nhận hoặc từ chối.</span>
+                </div>
+            </div>
+            <div id="tripDetailPane">
+                <div class="detail-empty">
+                    <i class="bi bi-arrow-left-circle"></i>
+                    <strong>Chọn một chuyến từ danh sách để xem chi tiết.</strong>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel-card">
+            <div class="panel-head">
+                <div>
+                    <h2>Thông báo gần đây</h2>
+                    <span>Dùng cùng layout tài xế để hiển thị thông báo điều phối.</span>
+                </div>
+            </div>
+            <div class="notify-list" id="notifyList">
+                @if (!Model.ThongBaoMoi.Any())
+                {
+                    <div class="notify-item">Chưa có thông báo mới.</div>
+                }
+                else
+                {
+                    foreach (var item in Model.ThongBaoMoi)
+                    {
+                        <div class="notify-item">
+                            @item.LogText
+                            <small>@item.ThoiGian.ToString("HH:mm dd/MM/yyyy")</small>
+                        </div>
+                    }
+                }
+            </div>
+        </section>
+    </div>
+</div>
+
+<div id="antiForgeryHost" class="d-none">@Html.AntiForgeryToken()</div>
+
+<div class="modal fade" id="confirmActionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4">
+            <div class="modal-body p-4">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center" style="width:52px;height:52px;">
+                        <i class="bi bi-question-circle-fill text-primary fs-4"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1 fw-bold" id="confirmTitle">Xác nhận thao tác</h5>
+                        <div class="text-muted small" id="confirmText">Bạn có chắc muốn tiếp tục?</div>
+                    </div>
+                </div>
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-primary btn-lg rounded-4" id="confirmSubmitBtn">Tiếp tục</button>
+                    <button type="button" class="btn btn-light btn-lg rounded-4" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const antiForgeryHtml = document.querySelector('#antiForgeryHost input')?.outerHTML ?? '';
+    let dashboardData = @Html.Raw(JsonSerializer.Serialize(Model, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
+    let selectedTripId = dashboardData.chuyenDuocPhanCong?.[0]?.idChuyenDi || dashboardData.chuyenMoi?.[0]?.idChuyenDi || null;
+    let pendingFormHtml = '';
+    const confirmModal = new bootstrap.Modal(document.getElementById('confirmActionModal'));
+
+    function statusText(status) {
+        return {
+            CHO: 'Chờ báo giá',
+            MOI: 'Mới',
+            DA_PHAN_CONG: 'Đã phân công',
+            DA_NHAN: 'Đã nhận',
+            DANG_DON: 'Đang đón',
+            DA_DON: 'Đã đón',
+            DANG_DI_CHUYEN: 'Đang di chuyển',
+            HOAN_TAT: 'Hoàn tất',
+            HUY: 'Hủy'
+        }[status] || status;
+    }
+
+    function statusClass(status) {
+        return (status || '').toLowerCase().replaceAll('_', '-');
+    }
+
+    function fmtDate(value) {
+        if (!value) return '';
+        return new Date(value).toLocaleString('vi-VN');
+    }
+
+    function fmtMoney(value) {
+        if (value == null) return '0 đ';
+        return `${Number(value).toLocaleString('vi-VN')} đ`;
+    }
+
+    function fmtTimer(seconds) {
+        if (seconds == null) return '';
+        const safe = Math.max(0, seconds);
+        const min = Math.floor(safe / 60);
+        const sec = safe % 60;
+        return `${min}:${String(sec).padStart(2, '0')}`;
+    }
+
+    function tripCard(trip, assigned) {
+        const timer = assigned && trip.remainingSeconds != null
+            ? `<span class="trip-timer"><i class="bi bi-hourglass-split"></i><span data-seconds="${trip.remainingSeconds}">${fmtTimer(trip.remainingSeconds)}</span></span>`
+            : `<span><i class="bi bi-cash-stack me-1"></i>${fmtMoney(trip.giaTamTinh)}</span>`;
+
+        return `
+            <article class="trip-card ${assigned ? 'assigned' : ''} ${selectedTripId === trip.idChuyenDi ? 'active' : ''}" data-trip-id="${trip.idChuyenDi}" onclick="selectTrip('${trip.idChuyenDi}')">
+                <div class="trip-card-head">
+                    <div>
+                        <div class="trip-id">${trip.idChuyenDi}</div>
+                        <small class="text-muted">Khách: ${trip.khachHang?.hoVaTen ?? 'Chưa rõ'}</small>
+                    </div>
+                    <span class="trip-status ${statusClass(trip.trangThai)}">${statusText(trip.trangThai)}</span>
+                </div>
+                <div class="trip-route">
+                    <div class="trip-route-item">
+                        <span class="trip-route-dot" style="background:#16a34a;"></span>
+                        <div><small>Điểm đón</small><strong>${trip.diemDon}</strong></div>
+                    </div>
+                    <div class="trip-route-item">
+                        <span class="trip-route-dot" style="background:#dc2626;"></span>
+                        <div><small>Điểm đến</small><strong>${trip.diemDen}</strong></div>
+                    </div>
+                </div>
+                <div class="trip-footer">
+                    <span><i class="bi bi-clock me-1"></i>${fmtDate(trip.thoiGianDon)}</span>
+                    ${timer}
+                </div>
+            </article>`;
+    }
+
+    function buildActionButton(trip) {
+        if (trip.trangThai === 'DA_PHAN_CONG') {
+            return `
+                <button class="btn btn-primary ${trip.canReceive ? '' : 'disabled'}" ${trip.canReceive ? '' : 'disabled'} onclick="openConfirm('Nhận chuyến', 'Sau khi nhận chuyến, bạn sẽ được đưa tới màn hình cập nhật tiến trình.', buildPostForm('/TaiXe/NhanChuyen', 'idChuyenDi', '${trip.idChuyenDi}'))">
+                    <i class="bi bi-check2-circle me-1"></i> Nhận chuyến
+                </button>
+                <button class="btn btn-outline-danger" onclick="openConfirm('Từ chối phân công', 'Chuyến sẽ trở lại trạng thái mới và điều phối sẽ nhận thông báo.', buildPostForm('/TaiXe/TuChoiPhanCong', 'idChuyenDi', '${trip.idChuyenDi}'))">
+                    <i class="bi bi-x-circle me-1"></i> Từ chối
+                </button>`;
+        }
+
+        return `
+            <button class="btn btn-primary ${trip.canReceive ? '' : 'disabled'}" ${trip.canReceive ? '' : 'disabled'} onclick="openConfirm('Nhận chuyến', 'Bạn sẽ là tài xế thực hiện chuyến này.', buildPostForm('/TaiXe/NhanChuyen', 'idChuyenDi', '${trip.idChuyenDi}'))">
+                <i class="bi bi-check2-circle me-1"></i> Nhận chuyến
+            </button>`;
+    }
+
+    function buildPostForm(action, key, value) {
+        return `<form method="post" action="${action}">${antiForgeryHtml}<input type="hidden" name="${key}" value="${value}" /></form>`;
+    }
+
+    function renderDetail() {
+        const trips = [...(dashboardData.chuyenDuocPhanCong || []), ...(dashboardData.chuyenMoi || [])];
+        const trip = trips.find(x => x.idChuyenDi === selectedTripId);
+        const pane = document.getElementById('tripDetailPane');
+
+        if (!trip) {
+            pane.innerHTML = `<div class="detail-empty"><i class="bi bi-arrow-left-circle"></i><strong>Chọn một chuyến từ danh sách để xem chi tiết.</strong></div>`;
+            return;
+        }
+
+        const logHtml = (trip.logs || []).slice(0, 4).map(log => `
+            <div class="notify-item">
+                ${log.logText}
+                <small>${fmtDate(log.thoiGian)}</small>
+            </div>`).join('');
+
+        pane.innerHTML = `
+            <div class="detail-body">
+                <div class="detail-block">
+                    <div class="trip-card-head mb-3">
+                        <div>
+                            <div class="trip-id">${trip.idChuyenDi}</div>
+                            <small class="text-muted">Khách: ${trip.khachHang?.hoVaTen ?? 'Chưa rõ'} · ${trip.khachHang?.sdt ?? ''}</small>
+                        </div>
+                        <span class="trip-status ${statusClass(trip.trangThai)}">${statusText(trip.trangThai)}</span>
+                    </div>
+                    <div class="detail-grid">
+                        <div class="detail-item"><small>Điểm đón</small><strong>${trip.diemDon}</strong></div>
+                        <div class="detail-item"><small>Điểm đến</small><strong>${trip.diemDen}</strong></div>
+                        <div class="detail-item"><small>Thời gian đón</small><strong>${fmtDate(trip.thoiGianDon)}</strong></div>
+                        <div class="detail-item"><small>Giá tạm tính</small><strong>${fmtMoney(trip.giaTamTinh)}</strong></div>
+                        <div class="detail-item"><small>Ghi chú</small><strong>${trip.ghiChu || 'Không có'}</strong></div>
+                        <div class="detail-item"><small>Điều phối</small><strong>${trip.admin?.hoVaTen ?? 'Chưa phân công'}</strong></div>
+                    </div>
+                </div>
+                <div class="detail-actions">
+                    ${buildActionButton(trip)}
+                    <a class="btn btn-light border" href="/TaiXe/ChiTietChuyen?idChuyenDi=${trip.idChuyenDi}">
+                        <i class="bi bi-eye me-1"></i> Xem trang chi tiết
+                    </a>
+                </div>
+                <div class="detail-block">
+                    <h3>Nhật ký gần nhất</h3>
+                    ${logHtml || '<div class="notify-item">Chưa có nhật ký.</div>'}
+                </div>
+            </div>`;
+    }
+
+    function renderLists() {
+        document.getElementById('assignedCount').textContent = (dashboardData.chuyenDuocPhanCong || []).length;
+        document.getElementById('openCount').textContent = (dashboardData.chuyenMoi || []).length;
+
+        document.getElementById('assignedTrips').innerHTML = (dashboardData.chuyenDuocPhanCong || []).length
+            ? dashboardData.chuyenDuocPhanCong.map(trip => tripCard(trip, true)).join('')
+            : '<div class="notify-item">Hiện chưa có chuyến nào được điều phối trực tiếp cho bạn.</div>';
+
+        document.getElementById('openTrips').innerHTML = (dashboardData.chuyenMoi || []).length
+            ? dashboardData.chuyenMoi.map(trip => tripCard(trip, false)).join('')
+            : '<div class="notify-item">Chưa có chuyến mới phù hợp trong lúc này.</div>';
+
+        document.getElementById('notifyList').innerHTML = (dashboardData.thongBaoMoi || []).length
+            ? dashboardData.thongBaoMoi.map(item => `<div class="notify-item">${item.logText}<small>${fmtDate(item.thoiGian)}</small></div>`).join('')
+            : '<div class="notify-item">Chưa có thông báo mới.</div>';
+
+        renderDetail();
+    }
+
+    function selectTrip(id) {
+        selectedTripId = id;
+        renderLists();
+    }
+
+    function openConfirm(title, text, formHtml) {
+        pendingFormHtml = formHtml;
+        document.getElementById('confirmTitle').textContent = title;
+        document.getElementById('confirmText').textContent = text;
+        confirmModal.show();
+    }
+
+    document.getElementById('confirmSubmitBtn').addEventListener('click', () => {
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = pendingFormHtml;
+        const form = wrapper.querySelector('form');
+        if (form) {
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+
+    async function refreshDashboard() {
+        try {
+            const response = await fetch('@Url.Action("DashboardData", "TaiXe")', { cache: 'no-store' });
+            const payload = await response.json();
+            if (!payload.success || !payload.data) return;
+            dashboardData = payload.data;
+            const trips = [...(dashboardData.chuyenDuocPhanCong || []), ...(dashboardData.chuyenMoi || [])];
+            if (!trips.some(x => x.idChuyenDi === selectedTripId)) {
+                selectedTripId = trips[0]?.idChuyenDi ?? null;
+            }
+            renderLists();
+        } catch {
+        }
+    }
+
+    renderLists();
+    setInterval(refreshDashboard, 8000);
+</script>
+}

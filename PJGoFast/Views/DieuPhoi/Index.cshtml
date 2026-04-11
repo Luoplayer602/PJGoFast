@@ -1,0 +1,418 @@
+@model DieuPhoiDashboardVM
+@using System.Text.Json
+
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Điều phối";
+}
+
+<style>
+    .dispatch-page {
+        display: grid;
+        gap: 18px;
+    }
+
+    .dispatch-hero {
+        background: linear-gradient(160deg, #0f172a 0%, #1d4ed8 70%, #60a5fa 100%);
+        color: #fff;
+        border-radius: 28px;
+        padding: 24px;
+        box-shadow: 0 20px 48px rgba(37,99,235,.20);
+    }
+
+    .dispatch-hero h1 {
+        margin: 0 0 6px;
+        font-size: clamp(1.5rem, 2vw, 2rem);
+        font-weight: 800;
+    }
+
+    .dispatch-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+    }
+
+    .dispatch-card {
+        background: #fff;
+        border-radius: 24px;
+        border: 1px solid #dbe4f0;
+        box-shadow: 0 10px 28px rgba(15,23,42,.06);
+        overflow: hidden;
+        min-height: 640px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .dispatch-head {
+        padding: 18px 20px 14px;
+        border-bottom: 1px solid #eef2f7;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .dispatch-head h2 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 800;
+    }
+
+    .dispatch-head span {
+        font-size: .8rem;
+        color: #64748b;
+    }
+
+    .dispatch-body {
+        position: relative;
+        flex: 1;
+        padding: 18px;
+        background: #f8fbff;
+    }
+
+    .dispatch-list {
+        display: grid;
+        gap: 12px;
+        max-height: 540px;
+        overflow: auto;
+        padding-right: 4px;
+    }
+
+    .dispatch-item {
+        border-radius: 18px;
+        border: 1px solid #dbe4f0;
+        background: #fff;
+        padding: 16px;
+        cursor: pointer;
+        transition: .15s ease;
+    }
+
+    .dispatch-item:hover,
+    .dispatch-item.active {
+        border-color: #93c5fd;
+        box-shadow: 0 14px 26px rgba(37,99,235,.10);
+        transform: translateY(-1px);
+    }
+
+    .item-id {
+        font-size: .82rem;
+        font-weight: 800;
+        font-family: Consolas, monospace;
+        color: #334155;
+    }
+
+    .item-meta {
+        margin-top: 8px;
+        color: #475569;
+        font-size: .84rem;
+        line-height: 1.5;
+    }
+
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 10px;
+        border-radius: 999px;
+        font-size: .74rem;
+        font-weight: 800;
+        margin-top: 10px;
+    }
+
+    .status-pill.online { background: #dcfce7; color: #15803d; }
+    .status-pill.busy { background: #fef3c7; color: #92400e; }
+    .status-pill.offline { background: #fee2e2; color: #b91c1c; }
+    .status-pill.moi { background: #dbeafe; color: #1d4ed8; }
+
+    .side-popup {
+        position: absolute;
+        inset: 16px 16px 16px auto;
+        width: min(92%, 360px);
+        background: rgba(255,255,255,.98);
+        backdrop-filter: blur(10px);
+        border: 1px solid #bfdbfe;
+        border-radius: 22px;
+        box-shadow: 0 22px 44px rgba(15,23,42,.16);
+        padding: 18px;
+        display: none;
+        z-index: 10;
+    }
+
+    .side-popup.show {
+        display: block;
+    }
+
+    .side-popup h3 {
+        margin: 0 0 12px;
+        font-size: .95rem;
+        font-weight: 800;
+    }
+
+    .popup-item + .popup-item {
+        margin-top: 10px;
+    }
+
+    .popup-item small {
+        display: block;
+        color: #94a3b8;
+        margin-bottom: 2px;
+    }
+
+    .popup-item strong {
+        display: block;
+        line-height: 1.45;
+        color: #0f172a;
+    }
+
+    .dispatch-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .toast-inline {
+        position: fixed;
+        left: 50%;
+        bottom: 26px;
+        transform: translateX(-50%);
+        min-width: 280px;
+        max-width: 440px;
+        padding: 14px 16px;
+        border-radius: 16px;
+        font-weight: 700;
+        box-shadow: 0 18px 34px rgba(15,23,42,.18);
+        display: none;
+        z-index: 220;
+    }
+
+    .toast-inline.show {
+        display: block;
+    }
+
+    .toast-inline.error {
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fca5a5;
+    }
+
+    .toast-inline.success {
+        background: #dcfce7;
+        color: #166534;
+        border: 1px solid #86efac;
+    }
+
+    @@media (max-width: 992px) {
+        .dispatch-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .dispatch-card {
+            min-height: auto;
+        }
+    }
+</style>
+
+<div class="dispatch-page">
+    <section class="dispatch-hero">
+        <h1>Điều phối chuyến theo thời gian thực</h1>
+        <div>Chọn một chuyến ở trạng thái mới và một tài xế khả dụng, sau đó xác nhận phân công. Tài xế offline đã được ẩn khỏi danh sách.</div>
+    </section>
+
+    <div class="dispatch-grid">
+        <section class="dispatch-card">
+            <div class="dispatch-head">
+                <div>
+                    <h2>Danh sách chuyến mới</h2>
+                    <span id="tripCount">@Model.ChuyenMoi.Count chuyến</span>
+                </div>
+            </div>
+            <div class="dispatch-body">
+                <div class="dispatch-list" id="tripList"></div>
+                <aside class="side-popup" id="tripPopup"></aside>
+            </div>
+        </section>
+
+        <section class="dispatch-card">
+            <div class="dispatch-head">
+                <div>
+                    <h2>Danh sách tài xế</h2>
+                    <span id="driverCount">@Model.TaiXes.Count tài xế</span>
+                </div>
+            </div>
+            <div class="dispatch-body">
+                <div class="dispatch-list" id="driverList"></div>
+                <aside class="side-popup" id="driverPopup"></aside>
+            </div>
+        </section>
+    </div>
+
+    <div class="dispatch-footer">
+        <button type="button" class="btn btn-primary btn-lg rounded-4 px-4 fw-bold" onclick="assignTrip()">
+            <i class="bi bi-diagram-3-fill me-1"></i> Xác nhận phân công
+        </button>
+    </div>
+</div>
+
+<div id="antiForgeryHost" class="d-none">@Html.AntiForgeryToken()</div>
+<div id="inlineToast" class="toast-inline"></div>
+
+@section Scripts {
+<script>
+    const antiToken = document.querySelector('#antiForgeryHost input')?.value ?? '';
+    let dashboard = @Html.Raw(JsonSerializer.Serialize(Model, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
+    let selectedTripId = null;
+    let selectedDriverId = null;
+
+    function fmtDate(value) {
+        return value ? new Date(value).toLocaleString('vi-VN') : '';
+    }
+
+    function showToast(message, type) {
+        const el = document.getElementById('inlineToast');
+        el.textContent = message;
+        el.className = `toast-inline ${type} show`;
+        clearTimeout(window.__toastTimer);
+        window.__toastTimer = setTimeout(() => el.classList.remove('show'), 4000);
+    }
+
+    function tripCard(trip) {
+        return `
+            <article class="dispatch-item ${selectedTripId === trip.idChuyenDi ? 'active' : ''}" onclick="selectTrip('${trip.idChuyenDi}')">
+                <div class="item-id">${trip.idChuyenDi}</div>
+                <div class="item-meta">
+                    <strong>Khách: ${trip.khachHang?.hoVaTen ?? 'Chưa rõ'}</strong><br />
+                    Điểm đón: ${trip.diemDon}<br />
+                    Điểm đến: ${trip.diemDen}<br />
+                    Đón lúc: ${fmtDate(trip.thoiGianDon)}
+                </div>
+                <span class="status-pill moi"><i class="bi bi-broadcast-pin"></i>Mới</span>
+            </article>`;
+    }
+
+    function driverCard(driver) {
+        const statusClass = (driver.trangThaiOnline || '').toLowerCase();
+        return `
+            <article class="dispatch-item ${selectedDriverId === driver.idTX ? 'active' : ''}" onclick="selectDriver('${driver.idTX}')">
+                <div class="item-id">${driver.idTX}</div>
+                <div class="item-meta">
+                    <strong>${driver.hoVaTen}</strong><br />
+                    ${driver.sdt}<br />
+                    Vị trí: ${driver.viTri || driver.diemDoi || 'Chưa cập nhật'}<br />
+                    Loại xe: ${driver.loaiXe}
+                </div>
+                <span class="status-pill ${statusClass}"><i class="bi bi-circle-fill"></i>${driver.trangThaiOnline}</span>
+            </article>`;
+    }
+
+    function renderTripPopup() {
+        const trip = (dashboard.chuyenMoi || []).find(x => x.idChuyenDi === selectedTripId);
+        const popup = document.getElementById('tripPopup');
+        if (!trip) {
+            popup.classList.remove('show');
+            popup.innerHTML = '';
+            return;
+        }
+
+        popup.classList.add('show');
+        popup.innerHTML = `
+            <h3>Chi tiết chuyến</h3>
+            <div class="popup-item"><small>Mã chuyến</small><strong>${trip.idChuyenDi}</strong></div>
+            <div class="popup-item"><small>Khách hàng</small><strong>${trip.khachHang?.hoVaTen ?? 'Chưa rõ'} · ${trip.khachHang?.sdt ?? ''}</strong></div>
+            <div class="popup-item"><small>Điểm đón</small><strong>${trip.diemDon}</strong></div>
+            <div class="popup-item"><small>Điểm đến</small><strong>${trip.diemDen}</strong></div>
+            <div class="popup-item"><small>Thời gian đón</small><strong>${fmtDate(trip.thoiGianDon)}</strong></div>
+            <div class="popup-item"><small>Ghi chú</small><strong>${trip.ghiChu || 'Không có'}</strong></div>
+            <div class="popup-item"><small>Giá tạm tính</small><strong>${Number(trip.giaTamTinh || 0).toLocaleString('vi-VN')} đ</strong></div>`;
+    }
+
+    function renderDriverPopup() {
+        const driver = (dashboard.taiXes || []).find(x => x.idTX === selectedDriverId);
+        const popup = document.getElementById('driverPopup');
+        if (!driver) {
+            popup.classList.remove('show');
+            popup.innerHTML = '';
+            return;
+        }
+
+        popup.classList.add('show');
+        popup.innerHTML = `
+            <h3>Chi tiết tài xế</h3>
+            <div class="popup-item"><small>Mã tài xế</small><strong>${driver.idTX}</strong></div>
+            <div class="popup-item"><small>Họ tên</small><strong>${driver.hoVaTen}</strong></div>
+            <div class="popup-item"><small>Số điện thoại</small><strong>${driver.sdt}</strong></div>
+            <div class="popup-item"><small>Loại xe</small><strong>${driver.loaiXe}</strong></div>
+            <div class="popup-item"><small>Vị trí</small><strong>${driver.viTri || driver.diemDoi || 'Chưa cập nhật'}</strong></div>
+            <div class="popup-item"><small>Trạng thái</small><strong>${driver.trangThaiOnline}</strong></div>
+            <div class="popup-item"><small>Chuyến hiện tại</small><strong>${driver.chuyenDangXuLy?.idChuyenDi ?? 'Không có'}</strong></div>`;
+    }
+
+    function renderAll() {
+        document.getElementById('tripCount').textContent = `${(dashboard.chuyenMoi || []).length} chuyến`;
+        document.getElementById('driverCount').textContent = `${(dashboard.taiXes || []).length} tài xế`;
+
+        document.getElementById('tripList').innerHTML = (dashboard.chuyenMoi || []).length
+            ? dashboard.chuyenMoi.map(tripCard).join('')
+            : '<div class="dispatch-item">Không còn chuyến mới cần phân công.</div>';
+
+        document.getElementById('driverList').innerHTML = (dashboard.taiXes || []).length
+            ? dashboard.taiXes.map(driverCard).join('')
+            : '<div class="dispatch-item">Không có tài xế khả dụng.</div>';
+
+        renderTripPopup();
+        renderDriverPopup();
+    }
+
+    function selectTrip(id) {
+        selectedTripId = id;
+        renderAll();
+    }
+
+    function selectDriver(id) {
+        selectedDriverId = id;
+        renderAll();
+    }
+
+    async function assignTrip() {
+        if (!selectedTripId || !selectedDriverId) {
+            showToast('Vui lòng chọn 1 chuyến và 1 tài xế.', 'error');
+            return;
+        }
+
+        const formData = new URLSearchParams();
+        formData.set('idChuyenDi', selectedTripId);
+        formData.set('idTX', selectedDriverId);
+        formData.set('__RequestVerificationToken', antiToken);
+
+        const response = await fetch('@Url.Action("PhanCong", "DieuPhoi")', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+            body: formData.toString()
+        });
+
+        const payload = await response.json();
+        showToast(payload.message, payload.success ? 'success' : 'error');
+
+        if (payload.success) {
+            selectedTripId = null;
+            selectedDriverId = null;
+            refreshDashboard();
+        }
+    }
+
+    async function refreshDashboard() {
+        try {
+            const response = await fetch('@Url.Action("DashboardData", "DieuPhoi")', { cache: 'no-store' });
+            const payload = await response.json();
+            if (!payload.success || !payload.data) return;
+            dashboard = payload.data;
+            if (!(dashboard.chuyenMoi || []).some(x => x.idChuyenDi === selectedTripId)) selectedTripId = null;
+            if (!(dashboard.taiXes || []).some(x => x.idTX === selectedDriverId)) selectedDriverId = null;
+            renderAll();
+        } catch {
+        }
+    }
+
+    renderAll();
+    setInterval(refreshDashboard, 8000);
+</script>
+}

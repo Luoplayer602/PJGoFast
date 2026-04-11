@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PJGoFast.Models;
@@ -17,11 +19,9 @@ namespace PJGoFast.Controllers
         private readonly IKhachHangService _khachHangService;
         private readonly IHttpClientFactory _httpClientFactory;
 
-        // ===== KEY API GOONG =====
         private const string GOONG_API_KEY = "H1eRRpu0DSAzfyP9x24rHLNX7OVocfHYoxVhCvGX";
         private const string GOONG_MAP_KEY = "DCZhv9n0uqtUA9sxXclNcEXFRlGdvUIY7LVngNWp";
 
-        // ===== BẢNG GIÁ CƯỚC (VND/km) — CHỈNH SỬA TẠI ĐÂY NẾU CẦN =====
         private static readonly Dictionary<string, (decimal PerKm, decimal ToiThieu)> _bangGia = new()
         {
             { "XeMay",  (  8_000m,  15_000m) },
@@ -30,7 +30,6 @@ namespace PJGoFast.Controllers
             { "BayCho", ( 18_000m,  50_000m) },
             { "TaiNho", ( 22_000m,  60_000m) },
         };
-        // ====================================================================
 
         public HomeController(
             IChuyenDiService chuyenDiService,
@@ -42,34 +41,39 @@ namespace PJGoFast.Controllers
             _httpClientFactory = httpClientFactory;
         }
 
-        // ─── Index ────────────────────────────────────────────────────────────
         public IActionResult Index() => View();
 
-        // ─── Tạo chuyến đi ───────────────────────────────────────────────────
         [HttpGet]
         public IActionResult taoChuyenDi()
         {
-            var model = new ChuyenDiCreateVM { IdKH = User.FindFirstValue(ClaimTypes.Name) };
+            var model = new ChuyenDiCreateVM { IdKH = GetCurrentKhachHangId() };
             return View(model);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> taoChuyenDi(ChuyenDiCreateVM model)
+        public IActionResult taoChuyenDi(ChuyenDiCreateVM model)
         {
+            model.IdKH = GetCurrentKhachHangId();
+
             if (!ModelState.IsValid)
             {
                 ViewBag.Error = "Vui lòng điền đầy đủ thông tin và đảm bảo dữ liệu hợp lệ.";
                 return View(model);
             }
 
-            string result = _chuyenDiService.TaoChuyenDi(
-                model.DiemDon, model.DiemDen,
-                model.ThoiGianDon, model.LoaiXeYeuCau,
-                model.GhiChu, model.IdKH);
+            var result = _chuyenDiService.TaoChuyenDi(
+                model.DiemDon,
+                model.DiemDen,
+                model.ThoiGianDon,
+                model.LoaiXeYeuCau,
+                model.GhiChu ?? string.Empty,
+                model.IdKH);
 
             if (result != "0")
+            {
                 return RedirectToAction(nameof(baoGia), new { IdChuyenDi = result });
+            }
 
             ViewBag.Error = "Đã xảy ra lỗi khi tạo chuyến đi. Vui lòng thử lại.";
             return View(model);
@@ -78,85 +82,100 @@ namespace PJGoFast.Controllers
         [HttpPost]
         public IActionResult taoChuyenDiWDiemDen(string diemDen)
         {
-            var model = new ChuyenDiCreateVM
+            return View("taoChuyenDi", new ChuyenDiCreateVM
             {
-                IdKH = User.FindFirstValue(ClaimTypes.Name),
+                IdKH = GetCurrentKhachHangId(),
                 DiemDen = diemDen
-            };
-            return View("taoChuyenDi", model);
+            });
         }
 
         [HttpPost]
         public IActionResult taoChuyenDiWVehicle(LoaiXe loaiXe)
         {
-            var model = new ChuyenDiCreateVM
+            return View("taoChuyenDi", new ChuyenDiCreateVM
             {
-                IdKH = User.FindFirstValue(ClaimTypes.Name),
+                IdKH = GetCurrentKhachHangId(),
                 LoaiXeYeuCau = loaiXe
-            };
-            return View("taoChuyenDi", model);
+            });
         }
 
-
-
-
-        // ─── Báo giá (basic) ─────────────────────────────────────────────────
         [HttpGet]
         public async Task<IActionResult> baoGia(string IdChuyenDi)
         {
             var vm = await BuildBaoGiaVMAsync(IdChuyenDi);
-            if (vm == null) return NotFound();
+            if (vm == null)
+            {
+                return NotFound();
+            }
+
             _chuyenDiService.CapNhatGiaTamTinh(IdChuyenDi, vm.GiaTamTinh);
+            ViewBag.DaXacNhan = _chuyenDiService.LayChuyenDiTheoId(IdChuyenDi)?.TrangThai != TrangThaiChuyen.CHO;
             return View(vm);
         }
 
-        // ─── Báo giá (map) ───────────────────────────────────────────────────
         [HttpGet]
         public async Task<IActionResult> baoGiaMap(string IdChuyenDi)
         {
             var vm = await BuildBaoGiaVMAsync(IdChuyenDi);
-            if (vm == null) return NotFound();
+            if (vm == null)
+            {
+                return NotFound();
+            }
+
             vm.GoongMapKey = GOONG_MAP_KEY;
             vm.GoongApiKey = GOONG_API_KEY;
+            ViewBag.DaXacNhan = _chuyenDiService.LayChuyenDiTheoId(IdChuyenDi)?.TrangThai != TrangThaiChuyen.CHO;
             return View(vm);
         }
 
-        // ─── Xóa hẳn khỏi DB (từ baoGia / baoGiaMap) ────────────────────────
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult XacNhanBaoGia(string IdChuyenDi)
+        {
+            var ok = _chuyenDiService.XacNhanBaoGia(IdChuyenDi, GetCurrentKhachHangId());
+            TempData[ok ? "Success" : "Error"] = ok
+                ? "Đã xác nhận báo giá. Chuyến đi của bạn đang chờ điều phối."
+                : "Không thể xác nhận báo giá ở thời điểm này.";
+
+            return RedirectToAction(nameof(TheoDoiChuyenDi), new { IdChuyenDi });
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult XoaChuyenDi(string IdChuyenDi)
         {
-            var idKH = User.FindFirstValue(ClaimTypes.Name);
-            _chuyenDiService.XoaChuyenDi(IdChuyenDi, idKH);
+            var ok = _chuyenDiService.XoaChuyenDi(IdChuyenDi, GetCurrentKhachHangId());
+            TempData[ok ? "Success" : "Error"] = ok
+                ? "Đã xóa yêu cầu đang chờ báo giá."
+                : "Không thể xóa yêu cầu này.";
             return RedirectToAction(nameof(Index));
         }
 
-        // ─── Lịch sử ─────────────────────────────────────────────────────────
         [HttpGet]
         public IActionResult History()
         {
-            var idKH = User.FindFirstValue(ClaimTypes.Name);
-            var list = _chuyenDiService.LayDanhSachChuyenDiCuaKH(idKH);
+            var list = _chuyenDiService.LayDanhSachChuyenDiCuaKH(GetCurrentKhachHangId());
             return View(list);
         }
 
-        // ─── Chi tiết chuyến đi ───────────────────────────────────────────────
         [HttpGet]
         public IActionResult ChiTietChuyenDi(string IdChuyenDi)
         {
-            var idKH     = User.FindFirstValue(ClaimTypes.Name);
+            var idKH = GetCurrentKhachHangId();
             var chuyenDi = _chuyenDiService.LayChuyenDiTheoId(IdChuyenDi);
-            if (chuyenDi == null || chuyenDi.IdKH != idKH) return NotFound();
+            if (chuyenDi == null || chuyenDi.IdKH != idKH)
+            {
+                return NotFound();
+            }
+
             return View(chuyenDi);
         }
 
-        // ─── Hủy chuyến (chuyển trạng thái → HUY) ────────────────────────────
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult HuyChuyenDi(string IdChuyenDi)
         {
-            var idKH = User.FindFirstValue(ClaimTypes.Name);
-            var ok   = _chuyenDiService.HuyChuyenDi(IdChuyenDi, idKH);
+            var ok = _chuyenDiService.HuyChuyenDi(IdChuyenDi, GetCurrentKhachHangId());
 
             TempData[ok ? "Success" : "Error"] = ok
                 ? "Chuyến đi đã được hủy thành công."
@@ -165,23 +184,153 @@ namespace PJGoFast.Controllers
             return RedirectToAction(nameof(History));
         }
 
-        // ─── Tài khoản ───────────────────────────────────────────────────────
+        [HttpGet]
+        public IActionResult TheoDoiChuyenDi(string? IdChuyenDi)
+        {
+            var idKH = GetCurrentKhachHangId();
+            var vm = _chuyenDiService.LayChuyenDangTheoDoiChoKhach(idKH);
+
+            if (!string.IsNullOrWhiteSpace(IdChuyenDi))
+            {
+                var trip = _chuyenDiService.LayChiTietChuyen(IdChuyenDi);
+                if (trip != null && trip.IdKH == idKH)
+                {
+                    vm.ChuyenDangTheoDoi = trip;
+                    vm.Logs = trip.Logs;
+                }
+            }
+
+            return View(vm);
+        }
+
+        [HttpGet]
+        public IActionResult TheoDoiChuyenDiData(string? IdChuyenDi)
+        {
+            var idKH = GetCurrentKhachHangId();
+            var vm = _chuyenDiService.LayChuyenDangTheoDoiChoKhach(idKH);
+
+            if (!string.IsNullOrWhiteSpace(IdChuyenDi))
+            {
+                var trip = _chuyenDiService.LayChiTietChuyen(IdChuyenDi);
+                if (trip != null && trip.IdKH == idKH)
+                {
+                    vm.ChuyenDangTheoDoi = trip;
+                    vm.Logs = trip.Logs;
+                }
+            }
+
+            return Json(new
+            {
+                success = true,
+                trip = vm.ChuyenDangTheoDoi,
+                trips = vm.ChuyenDangXuLy,
+                logs = vm.Logs
+            });
+        }
+
+        [HttpGet]
+        public IActionResult NhatKyChuyen(string IdChuyenDi)
+        {
+            var logs = _chuyenDiService.LayNhatKyChuyen(IdChuyenDi, GetCurrentKhachHangId(), "KhachHang");
+            return Json(new { success = true, logs });
+        }
+
         [HttpGet]
         public IActionResult Account()
         {
-            var idKH = User.FindFirstValue(ClaimTypes.Name);
-            var kh   = _khachHangService.LayThongTinKhachHang(idKH);
-            if (kh == null) return NotFound();
-            return View(kh);
+            var vm = _khachHangService.LayTrangTaiKhoan(GetCurrentKhachHangId());
+            if (vm == null)
+            {
+                return NotFound();
+            }
+
+            return View(vm);
         }
 
-        // ─── Helpers ─────────────────────────────────────────────────────────
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult CapNhatTaiKhoan(KhachHangProfileUpdateVM model)
+        {
+            if (!ModelState.IsValid)
+            {
+                var invalidVm = _khachHangService.LayTrangTaiKhoan(GetCurrentKhachHangId());
+                if (invalidVm != null)
+                {
+                    invalidVm.ProfileForm = model;
+                    return View("Account", invalidVm);
+                }
+
+                return RedirectToAction(nameof(Account));
+            }
+
+            var result = _khachHangService.CapNhatThongTin(GetCurrentKhachHangId(), model);
+            TempData[result.Success ? "Success" : "Error"] = result.Message;
+            return RedirectToAction(nameof(Account));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult DoiMatKhau(KhachHangChangePasswordVM model)
+        {
+            if (!ModelState.IsValid)
+            {
+                var invalidVm = _khachHangService.LayTrangTaiKhoan(GetCurrentKhachHangId());
+                if (invalidVm != null)
+                {
+                    invalidVm.PasswordForm = model;
+                    return View("Account", invalidVm);
+                }
+
+                return RedirectToAction(nameof(Account));
+            }
+
+            var result = _khachHangService.DoiMatKhau(GetCurrentKhachHangId(), model);
+            TempData[result.Success ? "Success" : "Error"] = result.Message;
+            return RedirectToAction(nameof(Account));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> XoaTaiKhoan(KhachHangDeleteAccountVM model)
+        {
+            if (!ModelState.IsValid)
+            {
+                var invalidVm = _khachHangService.LayTrangTaiKhoan(GetCurrentKhachHangId());
+                if (invalidVm != null)
+                {
+                    invalidVm.DeleteForm = model;
+                    return View("Account", invalidVm);
+                }
+
+                return RedirectToAction(nameof(Account));
+            }
+
+            var result = await _khachHangService.XoaTaiKhoanAsync(GetCurrentKhachHangId(), model.MatKhauXacNhan);
+            if (!result.Success)
+            {
+                TempData["Error"] = result.Message;
+                return RedirectToAction(nameof(Account));
+            }
+
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            TempData["Success"] = result.Message;
+            return RedirectToAction("Index", "Login");
+        }
+
+        private string GetCurrentKhachHangId()
+        {
+            return User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+        }
+
         private async Task<BaoGiaVM?> BuildBaoGiaVMAsync(string idChuyenDi)
         {
             var chuyenDi = _chuyenDiService.LayChuyenDiTheoId(idChuyenDi);
-            if (chuyenDi == null) return null;
+            if (chuyenDi == null || chuyenDi.IdKH != GetCurrentKhachHangId())
+            {
+                return null;
+            }
 
-            var client  = _httpClientFactory.CreateClient();
+            var client = _httpClientFactory.CreateClient();
             var taskDon = GeocodeAsync(client, chuyenDi.DiemDon);
             var taskDen = GeocodeAsync(client, chuyenDi.DiemDen);
             await Task.WhenAll(taskDon, taskDen);
@@ -190,7 +339,7 @@ namespace PJGoFast.Controllers
             var (denLat, denLng) = taskDen.Result;
 
             double khoangCachKm = 0;
-            int    thoiGianPhut = 0;
+            int thoiGianPhut = 0;
 
             if (donLat != 0 && denLat != 0)
             {
@@ -202,7 +351,7 @@ namespace PJGoFast.Controllers
                             $"&vehicle=car&api_key={GOONG_API_KEY}";
                 try
                 {
-                    var dmJson  = await client.GetStringAsync(dmUrl);
+                    var dmJson = await client.GetStringAsync(dmUrl);
                     using var doc = JsonDocument.Parse(dmJson);
                     var el = doc.RootElement.GetProperty("rows")[0].GetProperty("elements")[0];
                     if (el.GetProperty("status").GetString() == "OK")
@@ -211,26 +360,30 @@ namespace PJGoFast.Controllers
                         thoiGianPhut = (int)Math.Ceiling(el.GetProperty("duration").GetProperty("value").GetInt32() / 60.0);
                     }
                 }
-                catch { }
+                catch
+                {
+                }
             }
 
             var (giaTamTinh, giaPerKm, apDungMin) = TinhGia(chuyenDi.LoaiXeYeuCau.ToString(), (decimal)khoangCachKm);
 
             return new BaoGiaVM
             {
-                IdChuyenDi         = idChuyenDi,
-                DiemDon            = chuyenDi.DiemDon,
-                DiemDen            = chuyenDi.DiemDen,
-                ThoiGianDon        = chuyenDi.ThoiGianDon,
-                LoaiXeYeuCau       = chuyenDi.LoaiXeYeuCau,
-                GhiChu             = chuyenDi.GhiChu,
-                KhoangCachKm       = khoangCachKm,
+                IdChuyenDi = idChuyenDi,
+                DiemDon = chuyenDi.DiemDon,
+                DiemDen = chuyenDi.DiemDen,
+                ThoiGianDon = chuyenDi.ThoiGianDon,
+                LoaiXeYeuCau = chuyenDi.LoaiXeYeuCau,
+                GhiChu = chuyenDi.GhiChu,
+                KhoangCachKm = khoangCachKm,
                 ThoiGianDuTinhPhut = thoiGianPhut,
-                GiaTamTinh         = giaTamTinh,
-                GiaPerKm           = giaPerKm,
-                ApDungGiaToiThieu  = apDungMin,
-                DonLat = donLat, DonLng = donLng,
-                DenLat = denLat, DenLng = denLng,
+                GiaTamTinh = giaTamTinh,
+                GiaPerKm = giaPerKm,
+                ApDungGiaToiThieu = apDungMin,
+                DonLat = donLat,
+                DonLng = donLng,
+                DenLat = denLat,
+                DenLng = denLng,
             };
         }
 
@@ -238,21 +391,28 @@ namespace PJGoFast.Controllers
         {
             try
             {
-                var url  = $"https://rsapi.goong.io/v2/geocode?address={Uri.EscapeDataString(address)}&api_key={GOONG_API_KEY}";
+                var url = $"https://rsapi.goong.io/v2/geocode?address={Uri.EscapeDataString(address)}&api_key={GOONG_API_KEY}";
                 var json = await client.GetStringAsync(url);
                 using var doc = JsonDocument.Parse(json);
                 var loc = doc.RootElement.GetProperty("results")[0]
                     .GetProperty("geometry").GetProperty("location");
                 return (loc.GetProperty("lat").GetDouble(), loc.GetProperty("lng").GetDouble());
             }
-            catch { return (0, 0); }
+            catch
+            {
+                return (0, 0);
+            }
         }
 
         private static (decimal gia, decimal perKm, bool apDungMin) TinhGia(string loaiXe, decimal km)
         {
-            if (!_bangGia.TryGetValue(loaiXe, out var b)) b = (12_000m, 30_000m);
-            var rawGia  = Math.Round(km * b.PerKm, 0);
-            bool useMin = rawGia < b.ToiThieu;
+            if (!_bangGia.TryGetValue(loaiXe, out var b))
+            {
+                b = (12_000m, 30_000m);
+            }
+
+            var rawGia = Math.Round(km * b.PerKm, 0);
+            var useMin = rawGia < b.ToiThieu;
             return (useMin ? b.ToiThieu : rawGia, b.PerKm, useMin);
         }
 

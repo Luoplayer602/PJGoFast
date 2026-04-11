@@ -1,7 +1,5 @@
-﻿using System.Security.Claims;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
-
+using PJGoFast.ViewModels;
+using System.Security.Claims;
 
 namespace PJGoFast.Services.Interfaces
 {
@@ -11,8 +9,14 @@ namespace PJGoFast.Services.Interfaces
 
         ClaimsPrincipal KiemTraDangNhap(string sdt, string matKhau);
 
-        
-
         Models.Entities.KhachHang LayThongTinKhachHang(string idKH);
+
+        KhachHangAccountPageVM? LayTrangTaiKhoan(string idKH);
+
+        (bool Success, string Message) CapNhatThongTin(string idKH, KhachHangProfileUpdateVM model);
+
+        (bool Success, string Message) DoiMatKhau(string idKH, KhachHangChangePasswordVM model);
+
+        Task<(bool Success, string Message)> XoaTaiKhoanAsync(string idKH, string matKhauXacNhan);
     }
 }

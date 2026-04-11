@@ -3,414 +3,188 @@
 @model ChuyenDi
 
 @{
-    ViewData["Title"] = "Chi Tiết Chuyến Đi";
-        var userAgent = Context.Request.Headers["User-Agent"].ToString().ToLower();
-    
-    // Nhận diện các từ khóa phổ biến của thiết bị di động
-    bool isMobile = userAgent.Contains("mobi") || 
-                    userAgent.Contains("android") || 
-                    userAgent.Contains("iphone");
+    ViewData["Title"] = "Chi tiết chuyến đi";
+    var userAgent = Context.Request.Headers["User-Agent"].ToString().ToLower();
+    var isMobile = userAgent.Contains("mobi") || userAgent.Contains("android") || userAgent.Contains("iphone");
+    Layout = isMobile ? "_LayoutMobile" : "_Layout";
 
-    // Chọn layout tương ứng
-    if (isMobile)
-    {
-        Layout = "_LayoutMobile"; // Dùng cho điện thoại
-    }
-    else
-    {
-        Layout = "_Layout";       // Dùng cho máy tính (Desktop)
-    }
-
-    bool coTheHuy = Model.TrangThai == TrangThaiChuyen.MOI;
-
+    var coTheHuy = Model.TrangThai == TrangThaiChuyen.CHO || Model.TrangThai == TrangThaiChuyen.MOI || Model.TrangThai == TrangThaiChuyen.DA_PHAN_CONG;
     var statusText = Model.TrangThai switch
     {
-        TrangThaiChuyen.MOI            => "Chờ phân công",
-        TrangThaiChuyen.DA_PHAN_CONG   => "Đã phân công",
-        TrangThaiChuyen.DA_NHAN        => "Tài xế đã nhận",
-        TrangThaiChuyen.DANG_DON       => "Đang đến đón",
-        TrangThaiChuyen.DA_DON         => "Đã đón khách",
+        TrangThaiChuyen.CHO => "Đang xem báo giá",
+        TrangThaiChuyen.MOI => "Chờ phân công",
+        TrangThaiChuyen.DA_PHAN_CONG => "Đã phân công",
+        TrangThaiChuyen.DA_NHAN => "Tài xế đã nhận",
+        TrangThaiChuyen.DANG_DON => "Đang đón",
+        TrangThaiChuyen.DA_DON => "Đã đón",
         TrangThaiChuyen.DANG_DI_CHUYEN => "Đang di chuyển",
-        TrangThaiChuyen.HOAN_TAT       => "Hoàn tất",
-        TrangThaiChuyen.HUY            => "Đã hủy",
-        _                              => Model.TrangThai.ToString()
-    };
-    var statusClass = "badge-" + Model.TrangThai.ToString().ToLower().Replace("_", "-");
-
-    var tenLoaiXe = Model.LoaiXeYeuCau switch
-    {
-        LoaiXe.XeMay   => "Xe máy",
-        LoaiXe.Sedan   => "Xe sedan",
-        LoaiXe.SUV     => "Xe SUV",
-        LoaiXe.BayCho  => "Xe 7 chỗ",
-        LoaiXe.TaiNho  => "Xe tải nhỏ",
-        _              => Model.LoaiXeYeuCau.ToString()
+        TrangThaiChuyen.HOAN_TAT => "Hoàn tất",
+        TrangThaiChuyen.HUY => "Đã hủy",
+        _ => Model.TrangThai.ToString()
     };
 }
 
 <style>
-    .detail-page { padding: 16px; }
-
-    /* ── Status hero ── */
-    .status-hero {
-        border-radius: 18px;
-        padding: 20px 18px;
-        margin-bottom: 16px;
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        animation: fadeUp .35s ease both;
-    }
-    .status-hero.hero-moi           { background: linear-gradient(135deg,#eff6ff,#dbeafe); }
-    .status-hero.hero-da-phan-cong  { background: linear-gradient(135deg,#f0fdf4,#dcfce7); }
-    .status-hero.hero-da-nhan       { background: linear-gradient(135deg,#f0fdf4,#dcfce7); }
-    .status-hero.hero-dang-don      { background: linear-gradient(135deg,#fff7ed,#ffedd5); }
-    .status-hero.hero-da-don        { background: linear-gradient(135deg,#fff7ed,#ffedd5); }
-    .status-hero.hero-dang-di-chuyen{ background: linear-gradient(135deg,#fdf4ff,#f3e8ff); }
-    .status-hero.hero-hoan-tat      { background: linear-gradient(135deg,#f0fdf4,#bbf7d0); }
-    .status-hero.hero-huy           { background: linear-gradient(135deg,#fef2f2,#fee2e2); }
-
-    .status-icon-wrap {
-        width: 52px; height: 52px;
-        border-radius: 50%;
-        background: rgba(255,255,255,.7);
-        display: flex; align-items: center; justify-content: center;
-        font-size: 22px;
-        flex-shrink: 0;
-    }
-    .status-hero-text .label { font-size: .72rem; color: #6b7280; margin-bottom: 2px; }
-    .status-hero-text .value { font-size: 1rem; font-weight: 800; color: #111; }
-    .status-hero-text .id    { font-size: .72rem; font-family: monospace; color: #6b7280; margin-top: 4px; }
-
-    @@keyframes fadeUp {
-        from { opacity: 0; transform: translateY(14px); }
-        to   { opacity: 1; transform: translateY(0); }
+    .trip-detail-page {
+        display: grid;
+        grid-template-columns: minmax(0, 1.3fr) minmax(300px, .9fr);
+        gap: 18px;
     }
 
-    /* ── Section card ── */
-    .section-card {
+    .trip-card {
         background: #fff;
-        border-radius: 16px;
+        border-radius: 24px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 10px 28px rgba(15,23,42,.06);
         overflow: hidden;
-        margin-bottom: 12px;
-        box-shadow: 0 1px 8px rgba(0,0,0,.06);
-        animation: fadeUp .35s ease both;
     }
-    .section-head {
-        padding: 12px 16px;
-        border-bottom: 1px solid #f3f4f6;
-        font-size: .75rem;
+
+    .trip-hero {
+        padding: 24px;
+        color: #fff;
+        background: linear-gradient(160deg, #0f172a, #1d4ed8 72%, #60a5fa);
+    }
+
+    .trip-hero h1 {
+        margin: 0 0 8px;
+        font-size: 1.5rem;
+        font-weight: 800;
+    }
+
+    .hero-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(255,255,255,.14);
+        border: 1px solid rgba(255,255,255,.18);
+        font-size: .8rem;
         font-weight: 700;
+        margin: 12px 8px 0 0;
+    }
+
+    .trip-body {
+        padding: 22px 24px;
+        display: grid;
+        gap: 18px;
+    }
+
+    .info-block {
+        background: #f8fbff;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        padding: 18px;
+    }
+
+    .info-block h2 {
+        margin: 0 0 12px;
+        font-size: .84rem;
         text-transform: uppercase;
         letter-spacing: .06em;
-        color: #6b7280;
-        display: flex;
-        align-items: center;
-        gap: 7px;
+        color: #64748b;
+        font-weight: 800;
     }
-    .section-body { padding: 14px 16px; }
 
-    /* ── Route visual ── */
-    .rv-row {
-        display: flex;
-        align-items: stretch;
-        gap: 12px;
+    .info-item + .info-item {
+        margin-top: 10px;
     }
-    .rv-spine {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 4px 0;
-        flex-shrink: 0;
-    }
-    .rv-dot-g { width: 10px; height: 10px; border-radius: 50%; background: #22c55e; flex-shrink: 0; }
-    .rv-dot-r { width: 10px; height: 10px; border-radius: 50%; background: #ef4444; flex-shrink: 0; margin-top: auto; }
-    .rv-line  { flex: 1; width: 2px; background: linear-gradient(to bottom, #22c55e, #ef4444); border-radius: 2px; min-height: 20px; }
-    .rv-texts { flex: 1; display: flex; flex-direction: column; justify-content: space-between; gap: 12px; }
-    .rv-point-label { font-size: .69rem; color: #9ca3af; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
-    .rv-point-addr  { font-size: .9rem; font-weight: 600; color: #111827; line-height: 1.35; margin-top: 2px; }
 
-    /* ── Info rows ── */
-    .info-row {
-        display: flex;
-        align-items: flex-start;
+    .info-item small {
+        display: block;
+        color: #94a3b8;
+        margin-bottom: 3px;
+    }
+
+    .info-item strong {
+        display: block;
+        line-height: 1.45;
+        color: #0f172a;
+    }
+
+    .action-stack {
+        display: grid;
         gap: 10px;
-        padding: 9px 0;
-        border-bottom: 1px solid #f9fafb;
-        font-size: .86rem;
-    }
-    .info-row:last-child { border-bottom: none; }
-    .info-row .ik { color: #9ca3af; flex-shrink: 0; width: 20px; text-align: center; margin-top: 1px; }
-    .info-row .ilabel { color: #6b7280; min-width: 100px; flex-shrink: 0; }
-    .info-row .ival { font-weight: 600; color: #111827; flex: 1; }
-
-    /* ── Price box ── */
-    .price-box {
-        background: linear-gradient(135deg, #eff6ff, #f0fdf4);
-        border: 1.5px solid #bfdbfe;
-        border-radius: 14px;
-        padding: 14px 16px;
-    }
-    .price-row {
-        display: flex;
-        justify-content: space-between;
-        font-size: .84rem;
-        padding: 3px 0;
-        color: #374151;
-    }
-    .price-row.total {
-        border-top: 1.5px dashed #93c5fd;
-        margin-top: 10px; padding-top: 10px;
-        font-size: 1.1rem; font-weight: 800; color: #1d4ed8;
     }
 
-    /* ── Buttons ── */
-    .btn-back-hist {
-        display: flex; align-items: center; justify-content: center; gap: 8px;
-        width: 100%; padding: 13px;
-        border-radius: 14px; font-weight: 700; font-size: .92rem;
-        background: #f3f4f6; color: #374151;
-        border: 1.5px solid #e5e7eb; text-decoration: none;
-        transition: background .15s;
+    .action-stack .btn {
+        border-radius: 16px;
+        padding: 12px 16px;
+        font-weight: 800;
     }
-    .btn-back-hist:hover { background: #e5e7eb; color: #111; }
 
-    .btn-huy {
-        display: flex; align-items: center; justify-content: center; gap: 8px;
-        width: 100%; padding: 13px; margin-top: 10px;
-        border-radius: 14px; font-weight: 700; font-size: .92rem;
-        background: #fef2f2; color: #dc2626;
-        border: 1.5px solid #fca5a5; cursor: pointer;
-        transition: background .15s;
-    }
-    .btn-huy:hover { background: #fee2e2; }
-
-    /* ── Confirm modal ── */
-    .confirm-overlay {
-        position: fixed; inset: 0;
-        background: rgba(0,0,0,.45);
-        z-index: 500;
-        display: none;
-        align-items: flex-end;
-        justify-content: center;
-        animation: overlayIn .2s ease both;
-    }
-    .confirm-overlay.show { display: flex; }
-    @@keyframes overlayIn {
-        from { opacity: 0; }
-        to   { opacity: 1; }
-    }
-    .confirm-sheet {
-        background: #fff;
-        border-radius: 24px 24px 0 0;
-        padding: 28px 24px calc(28px + env(safe-area-inset-bottom, 0px));
-        width: 100%;
-        max-width: 480px;
-        animation: sheetUp .3s cubic-bezier(.22,1,.36,1) both;
-    }
-    @@keyframes sheetUp {
-        from { transform: translateY(100%); }
-        to   { transform: translateY(0); }
-    }
-    .confirm-sheet .icon-wrap {
-        width: 56px; height: 56px; border-radius: 50%;
-        background: #fef2f2; color: #dc2626;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 24px; margin: 0 auto 14px;
-    }
-    .confirm-sheet h6 { font-weight: 800; font-size: 1.05rem; text-align: center; color: #111; }
-    .confirm-sheet p  { font-size: .86rem; color: #6b7280; text-align: center; margin-bottom: 20px; }
-    .confirm-actions { display: flex; flex-direction: column; gap: 10px; }
-    .btn-confirm-yes {
-        width: 100%; padding: 13px; border-radius: 14px;
-        background: #dc2626; color: #fff;
-        font-weight: 700; font-size: .92rem; border: none; cursor: pointer;
-    }
-    .btn-confirm-no {
-        width: 100%; padding: 13px; border-radius: 14px;
-        background: #f3f4f6; color: #374151;
-        font-weight: 700; font-size: .92rem; border: 1.5px solid #e5e7eb; cursor: pointer;
+    @@media (max-width: 992px) {
+        .trip-detail-page {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
 
-<div class="detail-page">
-
-    <!-- Status hero -->
-    @{
-        var heroClass = "hero-" + Model.TrangThai.ToString().ToLower().Replace("_", "-");
-        var heroIcon  = Model.TrangThai switch
-        {
-            TrangThaiChuyen.MOI            => "bi-hourglass-split",
-            TrangThaiChuyen.DA_PHAN_CONG   => "bi-person-check-fill",
-            TrangThaiChuyen.DA_NHAN        => "bi-check-circle-fill",
-            TrangThaiChuyen.DANG_DON       => "bi-car-front-fill",
-            TrangThaiChuyen.DA_DON         => "bi-person-fill",
-            TrangThaiChuyen.DANG_DI_CHUYEN => "bi-speedometer2",
-            TrangThaiChuyen.HOAN_TAT       => "bi-patch-check-fill",
-            TrangThaiChuyen.HUY            => "bi-x-circle-fill",
-            _                              => "bi-circle"
-        };
-        var heroColor = Model.TrangThai switch
-        {
-            TrangThaiChuyen.MOI            => "#2563eb",
-            TrangThaiChuyen.HOAN_TAT       => "#16a34a",
-            TrangThaiChuyen.HUY            => "#dc2626",
-            TrangThaiChuyen.DANG_DON or
-            TrangThaiChuyen.DA_DON         => "#ea580c",
-            TrangThaiChuyen.DANG_DI_CHUYEN => "#9333ea",
-            _                              => "#16a34a"
-        };
-    }
-    <div class="status-hero @heroClass">
-        <div class="status-icon-wrap" style="color:@heroColor;">
-            <i class="bi @heroIcon"></i>
+<div class="trip-detail-page">
+    <section class="trip-card">
+        <div class="trip-hero">
+            <h1>Chuyến @Model.IdChuyenDi</h1>
+            <div>Thông tin trạng thái, lộ trình và người phụ trách của chuyến đi.</div>
+            <div>
+                <span class="hero-chip"><i class="bi bi-flag"></i>@statusText</span>
+                <span class="hero-chip"><i class="bi bi-clock"></i>@Model.ThoiGianDon.ToString("HH:mm dd/MM/yyyy")</span>
+                <span class="hero-chip"><i class="bi bi-cash-stack"></i>@(Model.GiaTamTinh?.ToString("N0") ?? "0") đ</span>
+            </div>
         </div>
-        <div class="status-hero-text">
-            <div class="label">Trạng thái chuyến đi</div>
-            <div class="value" style="color:@heroColor;">@statusText</div>
-            <div class="id"><i class="bi bi-hash"></i>@Model.IdChuyenDi</div>
-        </div>
-    </div>
 
-    <!-- Lộ trình -->
-    <div class="section-card">
-        <div class="section-head"><i class="bi bi-arrow-left-right text-primary"></i> Lộ trình</div>
-        <div class="section-body">
-            <div class="rv-row">
-                <div class="rv-spine">
-                    <div class="rv-dot-g"></div>
-                    <div class="rv-line"></div>
-                    <div class="rv-dot-r"></div>
-                </div>
-                <div class="rv-texts">
-                    <div>
-                        <div class="rv-point-label">Điểm đón</div>
-                        <div class="rv-point-addr">@Model.DiemDon</div>
-                    </div>
-                    <div>
-                        <div class="rv-point-label">Điểm đến</div>
-                        <div class="rv-point-addr">@Model.DiemDen</div>
-                    </div>
+        <div class="trip-body">
+            <div class="info-block">
+                <h2>Lộ trình</h2>
+                <div class="info-item"><small>Điểm đón</small><strong>@Model.DiemDon</strong></div>
+                <div class="info-item"><small>Điểm đến</small><strong>@Model.DiemDen</strong></div>
+                <div class="info-item"><small>Ghi chú</small><strong>@(string.IsNullOrWhiteSpace(Model.GhiChu) ? "Không có" : Model.GhiChu)</strong></div>
+            </div>
+
+            <div class="info-block">
+                <h2>Người phụ trách</h2>
+                <div class="info-item"><small>Tài xế</small><strong>@(Model.TaiXe != null ? $"{Model.TaiXe.HoVaTen} · {Model.TaiXe.SDT}" : "Chưa có tài xế")</strong></div>
+                <div class="info-item"><small>Điều phối</small><strong>@(Model.Admin != null ? $"{Model.Admin.HoVaTen} · {Model.Admin.SDT}" : "Chưa có điều phối")</strong></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="trip-card">
+        <div class="trip-body">
+            <div class="info-block">
+                <h2>Thao tác</h2>
+                <div class="action-stack">
+                    <a asp-action="TheoDoiChuyenDi" asp-route-IdChuyenDi="@Model.IdChuyenDi" class="btn btn-primary">
+                        <i class="bi bi-broadcast-pin me-1"></i> Xem tiến trình & nhật ký
+                    </a>
+                    <a asp-action="History" class="btn btn-light border">
+                        <i class="bi bi-arrow-left me-1"></i> Quay lại lịch sử
+                    </a>
+                    @if (coTheHuy)
+                    {
+                        <button type="button" class="btn btn-outline-danger" onclick="confirmCancel()">
+                            <i class="bi bi-x-circle me-1"></i> Hủy chuyến
+                        </button>
+                    }
                 </div>
             </div>
         </div>
-    </div>
-
-    <!-- Thông tin chuyến -->
-    <div class="section-card">
-        <div class="section-head"><i class="bi bi-info-circle text-primary"></i> Thông tin chuyến</div>
-        <div class="section-body">
-            <div class="info-row">
-                <i class="bi bi-car-front ik text-primary"></i>
-                <span class="ilabel">Loại xe</span>
-                <span class="ival">@tenLoaiXe</span>
-            </div>
-            <div class="info-row">
-                <i class="bi bi-calendar-event ik text-warning"></i>
-                <span class="ilabel">Thời gian đón</span>
-                <span class="ival">@Model.ThoiGianDon.ToString("HH:mm — dd/MM/yyyy")</span>
-            </div>
-            <div class="info-row">
-                <i class="bi bi-clock-history ik text-secondary"></i>
-                <span class="ilabel">Ngày tạo</span>
-                <span class="ival">@Model.ThoiGianTao.ToString("HH:mm — dd/MM/yyyy")</span>
-            </div>
-            @if (!string.IsNullOrWhiteSpace(Model.GhiChu))
-            {
-                <div class="info-row">
-                    <i class="bi bi-pencil ik text-secondary"></i>
-                    <span class="ilabel">Ghi chú</span>
-                    <span class="ival">@Model.GhiChu</span>
-                </div>
-            }
-            @if (Model.TaiXe != null)
-            {
-                <div class="info-row">
-                    <i class="bi bi-person-fill ik text-success"></i>
-                    <span class="ilabel">Tài xế</span>
-                    <span class="ival">@Model.TaiXe.HoVaTen — @Model.TaiXe.SDT</span>
-                </div>
-            }
-        </div>
-    </div>
-
-    <!-- Thanh toán -->
-    <div class="section-card">
-        <div class="section-head"><i class="bi bi-receipt text-primary"></i> Thanh toán</div>
-        <div class="section-body">
-            <div class="price-box">
-                @if (Model.GiaTamTinh > 0)
-                {
-                    <div class="price-row">
-                        <span>Giá tạm tính</span>
-                        <span>@Model.GiaTamTinh.Value.ToString("N0") đ</span>
-                    </div>
-                }
-                @if (Model.GiaThucTe.HasValue)
-                {
-                    <div class="price-row total">
-                        <span>Giá thực tế</span>
-                        <span>@Model.GiaThucTe.Value.ToString("N0") đ</span>
-                    </div>
-                }
-                else
-                {
-                    <div class="price-row total">
-                        <span>@(Model.TrangThai == TrangThaiChuyen.HOAN_TAT ? "Đã thanh toán" : "Giá tạm tính")</span>
-                        <span>@(Model.GiaTamTinh > 0 ? Model.GiaTamTinh.Value.ToString("N0") + " đ" : "Chờ xác nhận")</span>
-                    </div>
-                }
-            </div>
-        </div>
-    </div>
-
-    <!-- Buttons -->
-    <a asp-action="History" asp-controller="Home" class="btn-back-hist">
-        <i class="bi bi-arrow-left"></i> Quay lại lịch sử
-    </a>
-
-    @if (coTheHuy)
-    {
-        <button type="button" class="btn-huy" onclick="showConfirm()">
-            <i class="bi bi-x-circle"></i> Hủy chuyến đi
-        </button>
-    }
-
+    </section>
 </div>
 
-<!-- ── Confirm bottom sheet ── -->
 @if (coTheHuy)
 {
-    <div class="confirm-overlay" id="confirmOverlay" onclick="hideConfirm(event)">
-        <div class="confirm-sheet" onclick="event.stopPropagation()">
-            <div class="icon-wrap"><i class="bi bi-exclamation-triangle-fill"></i></div>
-            <h6>Xác nhận hủy chuyến?</h6>
-            <p>Chuyến đi sẽ bị hủy và không thể khôi phục. Bạn có chắc muốn tiếp tục?</p>
-            <div class="confirm-actions">
-                <form asp-action="HuyChuyenDi" asp-controller="Home" method="post">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="IdChuyenDi" value="@Model.IdChuyenDi" />
-                    <button type="submit" class="btn-confirm-yes">
-                        <i class="bi bi-check-lg me-2"></i>Xác nhận hủy
-                    </button>
-                </form>
-                <button type="button" class="btn-confirm-no" onclick="hideConfirm()">
-                    Không, giữ lại
-                </button>
-            </div>
-        </div>
-    </div>
+    <form id="cancelTripForm" asp-action="HuyChuyenDi" method="post" class="d-none">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="IdChuyenDi" value="@Model.IdChuyenDi" />
+    </form>
 
+    @section Scripts {
     <script>
-        function showConfirm() {
-            document.getElementById('confirmOverlay').classList.add('show');
-            document.body.style.overflow = 'hidden';
-        }
-        function hideConfirm(e) {
-            if (!e || e.target === document.getElementById('confirmOverlay')) {
-                document.getElementById('confirmOverlay').classList.remove('show');
-                document.body.style.overflow = '';
+        function confirmCancel() {
+            if (confirm('Xác nhận hủy chuyến này?')) {
+                document.getElementById('cancelTripForm').submit();
             }
         }
     </script>
+    }
 }

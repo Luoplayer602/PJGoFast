@@ -189,9 +189,16 @@ namespace PJGoFast.Controllers
                 return View();
             }
 
-            await HttpContext.SignInAsync(principal);
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
 
             return RedirectToAction("Index", "TaiXe"); // chuyển về trang tài xế
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Logout()
+        {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return RedirectToAction(nameof(Index));
         }
 
 

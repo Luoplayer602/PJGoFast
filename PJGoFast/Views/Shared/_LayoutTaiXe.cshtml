@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - GoFast Tài xế</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <style>
+        :root {
+            --tx-primary: #2563eb;
+            --tx-primary-soft: #eff6ff;
+            --tx-bg: #f4f7fb;
+            --tx-surface: #ffffff;
+            --tx-border: #dbe4f0;
+            --tx-text: #0f172a;
+            --tx-muted: #64748b;
+            --tx-success: #16a34a;
+            --tx-warning: #f59e0b;
+            --tx-danger: #dc2626;
+        }
+
+        html, body {
+            min-height: 100%;
+            background: var(--tx-bg);
+            color: var(--tx-text);
+        }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", system-ui, sans-serif;
+        }
+
+        .tx-topbar {
+            position: sticky;
+            top: 0;
+            z-index: 200;
+            background: rgba(255,255,255,.92);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(219,228,240,.95);
+            box-shadow: 0 10px 24px rgba(15,23,42,.04);
+        }
+
+        .tx-topbar-inner {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+        }
+
+        .tx-brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--tx-text);
+            font-weight: 800;
+            letter-spacing: -.02em;
+        }
+
+        .tx-brand img {
+            width: 38px;
+            height: 38px;
+            object-fit: contain;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #dbeafe, #eff6ff);
+            padding: 5px;
+        }
+
+        .tx-brand small {
+            display: block;
+            color: var(--tx-muted);
+            font-size: .72rem;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+        }
+
+        .tx-nav {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .tx-nav-link {
+            text-decoration: none;
+            color: var(--tx-muted);
+            padding: 10px 16px;
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: .92rem;
+            transition: .15s ease;
+        }
+
+        .tx-nav-link:hover {
+            background: #f8fafc;
+            color: var(--tx-text);
+        }
+
+        .tx-nav-link.active {
+            background: var(--tx-primary-soft);
+            color: var(--tx-primary);
+        }
+
+        .tx-user {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--tx-border);
+            background: #fff;
+            box-shadow: 0 4px 12px rgba(15,23,42,.04);
+        }
+
+        .tx-user-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1d4ed8, #60a5fa);
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tx-user-meta strong {
+            display: block;
+            font-size: .86rem;
+        }
+
+        .tx-user-meta span {
+            display: block;
+            font-size: .72rem;
+            color: var(--tx-muted);
+        }
+
+        .tx-shell {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 24px 18px 40px;
+        }
+
+        .tx-alerts {
+            margin-bottom: 18px;
+        }
+
+        .tx-alerts .alert {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 10px 24px rgba(15,23,42,.08);
+        }
+
+        @@media (max-width: 992px) {
+            .tx-topbar-inner {
+                flex-wrap: wrap;
+            }
+
+            .tx-nav {
+                width: 100%;
+                order: 3;
+            }
+        }
+
+        @@media (max-width: 576px) {
+            .tx-user-meta {
+                display: none;
+            }
+
+            .tx-shell {
+                padding-left: 12px;
+                padding-right: 12px;
+            }
+        }
+    </style>
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    @{
+        var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? string.Empty;
+        var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
+        var nhanChuyenActive = currentController == "TaiXe" && (currentAction == "Index" || currentAction == "ChiTietChuyen");
+        var tienTrinhActive = currentController == "TaiXe" && currentAction == "TienTrinh";
+        var accountActive = currentController == "TaiXe" && currentAction == "Account";
+    }
+    <header class="tx-topbar">
+        <div class="tx-topbar-inner">
+            <a class="tx-brand" asp-controller="TaiXe" asp-action="Index">
+                <img src="~/images/logo.png" alt="GoFast" onerror="this.style.display='none'" />
+                <span>
+                    <small>GoFast</small>
+                    Bảng tài xế
+                </span>
+            </a>
+
+            <nav class="tx-nav">
+                <a asp-controller="TaiXe" asp-action="Index" class="tx-nav-link @(nhanChuyenActive ? "active" : "")">
+                    <i class="bi bi-broadcast-pin me-1"></i> Nhận chuyến
+                </a>
+                <a asp-controller="TaiXe" asp-action="Index" class="tx-nav-link @(tienTrinhActive ? "active" : "")">
+                    <i class="bi bi-signpost-split me-1"></i> Tiến trình
+                </a>
+                <a asp-controller="TaiXe" asp-action="Account" class="tx-nav-link @(accountActive ? "active" : "")">
+                    <i class="bi bi-person-vcard me-1"></i> Tài khoản
+                </a>
+            </nav>
+
+            <div class="tx-user">
+                <span class="tx-user-avatar"><i class="bi bi-person-badge-fill"></i></span>
+                <span class="tx-user-meta">
+                    <strong>@(User.Identity?.Name ?? "Tài xế")</strong>
+                    <span>Tài xế đang đăng nhập</span>
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <div class="tx-shell">
+        @if (TempData["Success"] != null || TempData["Error"] != null)
+        {
+            <div class="tx-alerts">
+                @if (TempData["Success"] != null)
+                {
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                }
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Error"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                }
+            </div>
+        }
+
+        <main role="main">
+            @RenderBody()
+        </main>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

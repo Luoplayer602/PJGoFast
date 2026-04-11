@@ -32,7 +32,9 @@ namespace PJGoFast.Models.Entities
         public string? GhiChu { get; set; }
 
         [Required]
-        public TrangThaiChuyen TrangThai { get; set; } = TrangThaiChuyen.MOI;
+        public TrangThaiChuyen TrangThai { get; set; } = TrangThaiChuyen.CHO;
+
+        public DateTime? HanNhanChuyen { get; set; }
 
         public decimal? GiaTamTinh { get; set; }
 

@@ -1,0 +1,286 @@
+@model TripSummaryVM
+
+@{
+    ViewData["Title"] = "Chi tiết chuyến";
+    var userAgent = Context.Request.Headers["User-Agent"].ToString().ToLower();
+    var isMobile = userAgent.Contains("mobi") || userAgent.Contains("android") || userAgent.Contains("iphone");
+    Layout = isMobile ? "_LayoutTaiXeMobile" : "_LayoutTaiXe";
+}
+
+@functions {
+    string StatusText(PJGoFast.Models.Enums.TrangThaiChuyen status) => status switch
+    {
+        PJGoFast.Models.Enums.TrangThaiChuyen.CHO => "Chờ báo giá",
+        PJGoFast.Models.Enums.TrangThaiChuyen.MOI => "Mới",
+        PJGoFast.Models.Enums.TrangThaiChuyen.DA_PHAN_CONG => "Đã phân công",
+        PJGoFast.Models.Enums.TrangThaiChuyen.DA_NHAN => "Đã nhận",
+        PJGoFast.Models.Enums.TrangThaiChuyen.DANG_DON => "Đang đón",
+        PJGoFast.Models.Enums.TrangThaiChuyen.DA_DON => "Đã đón",
+        PJGoFast.Models.Enums.TrangThaiChuyen.DANG_DI_CHUYEN => "Đang di chuyển",
+        PJGoFast.Models.Enums.TrangThaiChuyen.HOAN_TAT => "Hoàn tất",
+        PJGoFast.Models.Enums.TrangThaiChuyen.HUY => "Hủy",
+        _ => status.ToString()
+    };
+}
+
+<style>
+    .trip-detail-page {
+        display: grid;
+        grid-template-columns: minmax(0, 1.4fr) minmax(320px, .9fr);
+        gap: 18px;
+    }
+
+    .trip-detail-card {
+        background: #fff;
+        border-radius: 24px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 10px 28px rgba(15,23,42,.06);
+        overflow: hidden;
+    }
+
+    .trip-detail-hero {
+        padding: 22px 24px;
+        color: #fff;
+        background: linear-gradient(160deg, #0f172a, #1d4ed8 72%, #3b82f6);
+    }
+
+    .trip-detail-hero h1 {
+        margin: 0 0 8px;
+        font-size: 1.5rem;
+        font-weight: 800;
+    }
+
+    .trip-detail-hero .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 16px;
+    }
+
+    .hero-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 12px;
+        border-radius: 999px;
+        background: rgba(255,255,255,.14);
+        border: 1px solid rgba(255,255,255,.18);
+        font-size: .8rem;
+        font-weight: 700;
+    }
+
+    .trip-detail-body {
+        padding: 22px 24px;
+        display: grid;
+        gap: 18px;
+    }
+
+    .info-block {
+        background: #f8fbff;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        padding: 18px;
+    }
+
+    .info-block h2 {
+        margin: 0 0 14px;
+        font-size: .84rem;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: #64748b;
+        font-weight: 800;
+    }
+
+    .info-grid {
+        display: grid;
+        gap: 12px;
+    }
+
+    .info-item small {
+        display: block;
+        color: #94a3b8;
+        margin-bottom: 3px;
+    }
+
+    .info-item strong {
+        display: block;
+        color: #0f172a;
+        line-height: 1.45;
+    }
+
+    .log-item {
+        padding: 12px 14px;
+        border-radius: 16px;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+    }
+
+    .log-item small {
+        display: block;
+        margin-top: 4px;
+        color: #94a3b8;
+    }
+
+    .action-stack {
+        display: grid;
+        gap: 10px;
+    }
+
+    .action-stack .btn {
+        border-radius: 16px;
+        padding: 12px 16px;
+        font-weight: 800;
+    }
+
+    @@media (max-width: 992px) {
+        .trip-detail-page {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="trip-detail-page">
+    <section class="trip-detail-card">
+        <div class="trip-detail-hero">
+            <h1>Chi tiết chuyến @Model.IdChuyenDi</h1>
+            <div>Khách hàng: <strong>@Model.KhachHang?.HoVaTen</strong> · @Model.KhachHang?.SDT</div>
+            <div class="meta">
+                <span class="hero-chip"><i class="bi bi-flag"></i>@StatusText(Model.TrangThai)</span>
+                <span class="hero-chip"><i class="bi bi-clock"></i>@Model.ThoiGianDon.ToString("HH:mm dd/MM/yyyy")</span>
+                <span class="hero-chip"><i class="bi bi-cash-stack"></i>@(Model.GiaTamTinh?.ToString("N0") ?? "0") đ</span>
+            </div>
+        </div>
+
+        <div class="trip-detail-body">
+            <div class="info-block">
+                <h2>Lộ trình</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <small>Điểm đón</small>
+                        <strong>@Model.DiemDon</strong>
+                    </div>
+                    <div class="info-item">
+                        <small>Điểm đến</small>
+                        <strong>@Model.DiemDen</strong>
+                    </div>
+                    <div class="info-item">
+                        <small>Ghi chú</small>
+                        <strong>@(string.IsNullOrWhiteSpace(Model.GhiChu) ? "Không có" : Model.GhiChu)</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-block">
+                <h2>Thông tin liên quan</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <small>Khách hàng</small>
+                        <strong>@Model.KhachHang?.HoVaTen · @Model.KhachHang?.SDT</strong>
+                    </div>
+                    <div class="info-item">
+                        <small>Điều phối</small>
+                        <strong>@(Model.Admin?.HoVaTen ?? "Chưa có")</strong>
+                    </div>
+                    <div class="info-item">
+                        <small>Hạn phản hồi</small>
+                        <strong>@(Model.HanNhanChuyen?.ToString("HH:mm:ss dd/MM/yyyy") ?? "Không áp dụng")</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="trip-detail-card">
+        <div class="trip-detail-body">
+            <div class="info-block">
+                <h2>Thao tác</h2>
+                <div class="action-stack">
+                    @if (Model.TrangThai == PJGoFast.Models.Enums.TrangThaiChuyen.DA_NHAN || Model.TrangThai == PJGoFast.Models.Enums.TrangThaiChuyen.DANG_DON || Model.TrangThai == PJGoFast.Models.Enums.TrangThaiChuyen.DA_DON || Model.TrangThai == PJGoFast.Models.Enums.TrangThaiChuyen.DANG_DI_CHUYEN || Model.TrangThai == PJGoFast.Models.Enums.TrangThaiChuyen.HOAN_TAT)
+                    {
+                        <a asp-action="TienTrinh" asp-route-idChuyenDi="@Model.IdChuyenDi" class="btn btn-success">
+                            <i class="bi bi-signpost-split me-1"></i> Mở tiến trình chuyến
+                        </a>
+                    }
+                    else
+                    {
+                        <button type="button" class="btn btn-primary @(Model.CanReceive ? "" : "disabled")" @(Model.CanReceive ? "" : "disabled") onclick="showConfirm('Nhận chuyến', 'Bạn sẽ là tài xế thực hiện chuyến này.', 'acceptForm')">
+                            <i class="bi bi-check-circle me-1"></i> Nhận chuyến
+                        </button>
+                    }
+
+                    @if (Model.CanReject)
+                    {
+                        <button type="button" class="btn btn-outline-danger" onclick="showConfirm('Từ chối phân công', 'Chuyến sẽ quay lại danh sách chuyến mới.', 'rejectForm')">
+                            <i class="bi bi-x-circle me-1"></i> Từ chối
+                        </button>
+                    }
+
+                    <a asp-action="Index" class="btn btn-light border">
+                        <i class="bi bi-arrow-left me-1"></i> Quay lại danh sách
+                    </a>
+                </div>
+            </div>
+
+            <div class="info-block">
+                <h2>Nhật ký chuyến</h2>
+                @if (!Model.Logs.Any())
+                {
+                    <div class="log-item">Chưa có nhật ký.</div>
+                }
+                else
+                {
+                    foreach (var log in Model.Logs)
+                    {
+                        <div class="log-item mb-2">
+                            @log.LogText
+                            <small>@log.ThoiGian.ToString("HH:mm:ss dd/MM/yyyy")</small>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </section>
+</div>
+
+<form id="acceptForm" asp-action="NhanChuyen" method="post" class="d-none">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="idChuyenDi" value="@Model.IdChuyenDi" />
+</form>
+
+<form id="rejectForm" asp-action="TuChoiPhanCong" method="post" class="d-none">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="idChuyenDi" value="@Model.IdChuyenDi" />
+</form>
+
+<div class="modal fade" id="confirmTripModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4">
+            <div class="modal-body p-4">
+                <h5 class="fw-bold mb-2" id="modalTitle"></h5>
+                <p class="text-muted mb-4" id="modalText"></p>
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-primary btn-lg rounded-4" id="modalConfirmBtn">Xác nhận</button>
+                    <button type="button" class="btn btn-light btn-lg rounded-4" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    let targetFormId = '';
+    const modal = new bootstrap.Modal(document.getElementById('confirmTripModal'));
+
+    function showConfirm(title, text, formId) {
+        targetFormId = formId;
+        document.getElementById('modalTitle').textContent = title;
+        document.getElementById('modalText').textContent = text;
+        modal.show();
+    }
+
+    document.getElementById('modalConfirmBtn').addEventListener('click', () => {
+        document.getElementById(targetFormId)?.submit();
+    });
+</script>
+}

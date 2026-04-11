@@ -1,224 +1,169 @@
-@using PJGoFast.Models.Entities
-@model KhachHang
+@model KhachHangAccountPageVM
 
 @{
-    ViewData["Title"] = "Tài Khoản";
-        var userAgent = Context.Request.Headers["User-Agent"].ToString().ToLower();
-    
-    // Nhận diện các từ khóa phổ biến của thiết bị di động
-    bool isMobile = userAgent.Contains("mobi") || 
-                    userAgent.Contains("android") || 
-                    userAgent.Contains("iphone");
+    ViewData["Title"] = "Tài khoản";
+    var userAgent = Context.Request.Headers["User-Agent"].ToString().ToLower();
+    var isMobile = userAgent.Contains("mobi") || userAgent.Contains("android") || userAgent.Contains("iphone");
+    Layout = isMobile ? "_LayoutMobile" : "_Layout";
 
-    // Chọn layout tương ứng
-    if (isMobile)
-    {
-        Layout = "_LayoutMobile"; // Dùng cho điện thoại
-    }
-    else
-    {
-        Layout = "_Layout";       // Dùng cho máy tính (Desktop)
-    }
-
-    // Tên viết tắt cho avatar placeholder
-    var initials = string.IsNullOrWhiteSpace(Model.HoVaTen) ? "?"
-        : string.Join("", Model.HoVaTen.Trim().Split(' ')
+    var initials = string.IsNullOrWhiteSpace(Model.KhachHang.HoVaTen) ? "?"
+        : string.Join("", Model.KhachHang.HoVaTen.Trim().Split(' ')
             .Where(w => w.Length > 0)
             .TakeLast(2)
             .Select(w => w[0].ToString().ToUpper()));
 }
 
 <style>
-    .account-page { padding: 0 0 24px; }
-
-    /* ── Hero ── */
-    .account-hero {
-        background: linear-gradient(160deg, #1d4ed8 0%, #3b82f6 60%, #60a5fa 100%);
-        padding: 32px 20px 70px;
-        text-align: center;
-        position: relative;
-    }
-    .avatar-circle {
-        width: 84px; height: 84px;
-        border-radius: 50%;
-        background: rgba(255,255,255,.22);
-        display: flex; align-items: center; justify-content: center;
-        font-size: 2rem; font-weight: 800;
-        color: #fff;
-        margin: 0 auto 12px;
-        border: 3px solid rgba(255,255,255,.4);
-        letter-spacing: -.02em;
-    }
-    .account-hero .name {
-        font-size: 1.15rem; font-weight: 800; color: #fff; margin-bottom: 4px;
-    }
-    .account-hero .role-tag {
-        background: rgba(255,255,255,.2);
-        color: #fff;
-        border-radius: 20px;
-        padding: 3px 14px;
-        font-size: .75rem;
-        font-weight: 600;
+    .account-page {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(320px, .9fr);
+        gap: 18px;
     }
 
-    /* Overlap card */
-    .info-overlap {
-        margin: -44px 16px 0;
+    .account-card {
         background: #fff;
-        border-radius: 20px;
-        box-shadow: 0 4px 24px rgba(37,99,235,.12);
+        border-radius: 24px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 10px 28px rgba(15,23,42,.06);
         overflow: hidden;
-        animation: fadeUp .4s ease both;
-    }
-    @@keyframes fadeUp {
-        from { opacity: 0; transform: translateY(14px); }
-        to   { opacity: 1; transform: translateY(0); }
     }
 
-    /* ── Info rows ── */
-    .info-row {
+    .account-hero {
+        padding: 28px 26px;
+        background: linear-gradient(160deg, #0f172a, #1d4ed8 72%, #60a5fa);
+        color: #fff;
+    }
+
+    .avatar-circle {
+        width: 86px;
+        height: 86px;
+        border-radius: 50%;
+        background: rgba(255,255,255,.18);
+        border: 3px solid rgba(255,255,255,.24);
         display: flex;
         align-items: center;
-        gap: 12px;
-        padding: 14px 18px;
-        border-bottom: 1px solid #f3f4f6;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: 800;
+        margin-bottom: 14px;
     }
-    .info-row:last-child { border-bottom: none; }
-    .info-icon {
-        width: 38px; height: 38px;
-        border-radius: 12px;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 1rem;
-        flex-shrink: 0;
-    }
-    .info-row .ilabel { font-size: .72rem; color: #9ca3af; margin-bottom: 1px; }
-    .info-row .ival   { font-size: .92rem; font-weight: 600; color: #111827; }
 
-    /* ── Section cards ── */
-    .section-card {
-        background: #fff;
-        border-radius: 16px;
-        box-shadow: 0 1px 8px rgba(0,0,0,.06);
-        margin: 14px 16px 0;
-        overflow: hidden;
+    .account-body {
+        padding: 22px 24px;
+        display: grid;
+        gap: 18px;
     }
-    .section-head {
-        padding: 12px 18px;
-        border-bottom: 1px solid #f3f4f6;
-        font-size: .75rem;
-        font-weight: 700;
+
+    .info-block {
+        background: #f8fbff;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        padding: 18px;
+    }
+
+    .info-block h2 {
+        margin: 0 0 12px;
+        font-size: .84rem;
         text-transform: uppercase;
         letter-spacing: .06em;
-        color: #9ca3af;
-        display: flex; align-items: center; gap: 7px;
+        color: #64748b;
+        font-weight: 800;
     }
 
-    /* ── Stats ── */
-    .stats-row {
-        display: flex;
-        padding: 16px 18px;
-        gap: 12px;
+    .info-item + .info-item {
+        margin-top: 10px;
     }
-    .stat-item {
-        flex: 1;
-        text-align: center;
-        padding: 14px 8px;
-        background: #f9fafb;
-        border-radius: 14px;
-    }
-    .stat-item .sv { font-size: 1.4rem; font-weight: 800; color: #111; }
-    .stat-item .sl { font-size: .7rem; color: #6b7280; margin-top: 2px; }
 
-    /* ── Logout button ── */
-    .btn-logout {
-        display: flex; align-items: center; justify-content: center; gap: 10px;
-        width: calc(100% - 32px); margin: 14px 16px 0;
-        padding: 14px; border-radius: 14px;
-        background: #fef2f2; color: #dc2626;
-        border: 1.5px solid #fca5a5; font-weight: 700; font-size: .92rem;
-        text-decoration: none; transition: background .15s;
+    .info-item small {
+        display: block;
+        color: #94a3b8;
+        margin-bottom: 3px;
     }
-    .btn-logout:hover { background: #fee2e2; color: #b91c1c; }
 
-    /* ── Member since chip ── */
-    .member-chip {
-        display: inline-flex; align-items: center; gap: 6px;
-        background: rgba(255,255,255,.18);
-        border-radius: 20px; padding: 4px 14px;
-        font-size: .73rem; color: rgba(255,255,255,.85);
-        margin-top: 8px;
+    .info-item strong {
+        display: block;
+        color: #0f172a;
+    }
+
+    .form-control, .form-select {
+        border-radius: 16px;
+        padding: 12px 14px;
+    }
+
+    .action-stack {
+        display: grid;
+        gap: 10px;
+    }
+
+    .action-stack .btn {
+        border-radius: 16px;
+        padding: 12px 16px;
+        font-weight: 800;
+    }
+
+    @@media (max-width: 992px) {
+        .account-page {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
 
 <div class="account-page">
-
-    <!-- Hero -->
-    <div class="account-hero">
-        <div class="avatar-circle">@initials</div>
-        <div class="name">@Model.HoVaTen</div>
-        <div class="mt-2">
-            <span class="role-tag"><i class="bi bi-person-check me-1"></i>Khách hàng</span>
+    <section class="account-card">
+        <div class="account-hero">
+            <div class="avatar-circle">@initials</div>
+            <h1 class="h3 fw-bold mb-1">@Model.KhachHang.HoVaTen</h1>
+            <div>Khách hàng từ @Model.KhachHang.NgayDangKy.ToString("MM/yyyy")</div>
         </div>
-        <div class="member-chip">
-            <i class="bi bi-calendar3"></i>
-            Thành viên từ @Model.NgayDangKy.ToString("MM/yyyy")
+        <div class="account-body">
+            <div class="info-block">
+                <h2>Thông tin hiện tại</h2>
+                <div class="info-item"><small>Mã khách hàng</small><strong>@Model.KhachHang.IdKH</strong></div>
+                <div class="info-item"><small>Số điện thoại</small><strong>@Model.KhachHang.SDT</strong></div>
+                <div class="info-item"><small>Email</small><strong>@(string.IsNullOrWhiteSpace(Model.KhachHang.Email) ? "Chưa cập nhật" : Model.KhachHang.Email)</strong></div>
+                <div class="info-item"><small>Ngày sinh</small><strong>@(Model.KhachHang.NgaySinh?.ToString("dd/MM/yyyy") ?? "Chưa cập nhật")</strong></div>
+            </div>
+
+            <a asp-controller="Login" asp-action="Logout" class="btn btn-outline-danger rounded-4 py-3 fw-bold">
+                <i class="bi bi-box-arrow-right me-1"></i> Đăng xuất
+            </a>
         </div>
-    </div>
+    </section>
 
-    <!-- Info card (overlapping hero) -->
-    <div class="info-overlap">
+    <section class="account-card">
+        <div class="account-body">
+            <div class="info-block">
+                <h2>Sửa thông tin</h2>
+                <form asp-action="CapNhatTaiKhoan" method="post" class="action-stack">
+                    @Html.AntiForgeryToken()
+                    <input class="form-control" name="HoVaTen" value="@Model.ProfileForm.HoVaTen" placeholder="Họ và tên" />
+                    <input class="form-control" name="Email" value="@Model.ProfileForm.Email" placeholder="Email" />
+                    <input class="form-control" type="date" name="NgaySinh" value="@Model.ProfileForm.NgaySinh?.ToString("yyyy-MM-dd")" />
+                    <button type="submit" class="btn btn-primary">Lưu thông tin</button>
+                </form>
+            </div>
 
-        <div class="info-row">
-            <div class="info-icon" style="background:#eff6ff;color:#2563eb;">
-                <i class="bi bi-telephone-fill"></i>
+            <div class="info-block">
+                <h2>Đổi mật khẩu</h2>
+                <form asp-action="DoiMatKhau" method="post" class="action-stack">
+                    @Html.AntiForgeryToken()
+                    <input class="form-control" type="password" name="MatKhauHienTai" placeholder="Mật khẩu hiện tại" />
+                    <input class="form-control" type="password" name="MatKhauMoi" placeholder="Mật khẩu mới" />
+                    <input class="form-control" type="password" name="XacNhanMatKhauMoi" placeholder="Xác nhận mật khẩu mới" />
+                    <button type="submit" class="btn btn-warning text-white">Đổi mật khẩu</button>
+                </form>
             </div>
-            <div>
-                <div class="ilabel">Số điện thoại</div>
-                <div class="ival">@Model.SDT</div>
-            </div>
-        </div>
 
-        @if (!string.IsNullOrWhiteSpace(Model.Email))
-        {
-            <div class="info-row">
-                <div class="info-icon" style="background:#f0fdf4;color:#16a34a;">
-                    <i class="bi bi-envelope-fill"></i>
-                </div>
-                <div>
-                    <div class="ilabel">Email</div>
-                    <div class="ival">@Model.Email</div>
-                </div>
-            </div>
-        }
-
-        @if (Model.NgaySinh.HasValue)
-        {
-            <div class="info-row">
-                <div class="info-icon" style="background:#fff7ed;color:#ea580c;">
-                    <i class="bi bi-cake2-fill"></i>
-                </div>
-                <div>
-                    <div class="ilabel">Ngày sinh</div>
-                    <div class="ival">@Model.NgaySinh.Value.ToString("dd/MM/yyyy")</div>
-                </div>
-            </div>
-        }
-
-        <div class="info-row">
-            <div class="info-icon" style="background:#fdf4ff;color:#9333ea;">
-                <i class="bi bi-hash"></i>
-            </div>
-            <div>
-                <div class="ilabel">Mã khách hàng</div>
-                <div class="ival" style="font-family:monospace; font-size:.82rem;">@Model.IdKH</div>
+            <div class="info-block">
+                <h2>Xóa tài khoản</h2>
+                <form asp-action="XoaTaiKhoan" method="post" class="action-stack">
+                    @Html.AntiForgeryToken()
+                    <input class="form-control" type="password" name="MatKhauXacNhan" placeholder="Nhập mật khẩu để xác nhận" />
+                    <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Xác nhận xóa tài khoản? Thao tác này sẽ xóa lịch sử chuyến đã kết thúc của bạn.');">
+                        Xóa tài khoản
+                    </button>
+                </form>
             </div>
         </div>
-
-    </div>
-
-    <!-- Logout -->
-    <a asp-controller="Login" asp-action="Logout" class="btn-logout">
-        <i class="bi bi-box-arrow-right"></i> Đăng xuất
-    </a>
-
+    </section>
 </div>
