@@ -43,5 +43,7 @@ namespace PJGoFast.Services.Interfaces
         (bool Success, string Message) HuyChuyenTuTaiXe(string idChuyenDi, string idTX);
 
         (bool Success, string Message) XacNhanThanhToan(string idChuyenDi, string idTX, string phuongThucThanhToan, decimal soTienThanhToan);
+
+        int XuLyPhanCongHetHanTuDong();
     }
 }

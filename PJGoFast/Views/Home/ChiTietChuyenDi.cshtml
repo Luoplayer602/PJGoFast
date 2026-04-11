@@ -145,6 +145,24 @@
                 <div class="info-item"><small>Tài xế</small><strong>@(Model.TaiXe != null ? $"{Model.TaiXe.HoVaTen} · {Model.TaiXe.SDT}" : "Chưa có tài xế")</strong></div>
                 <div class="info-item"><small>Điều phối</small><strong>@(Model.Admin != null ? $"{Model.Admin.HoVaTen} · {Model.Admin.SDT}" : "Chưa có điều phối")</strong></div>
             </div>
+
+            <div class="info-block">
+                <h2>Nhật ký chuyến đi</h2>
+                @if (Model.NhatKys != null && Model.NhatKys.Any())
+                {
+                    foreach (var log in Model.NhatKys.OrderByDescending(x => x.ThoiGian))
+                    {
+                        <div class="info-item">
+                            <small>@log.ThoiGian.ToString("HH:mm:ss dd/MM/yyyy")</small>
+                            <strong>@log.LogText</strong>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="info-item"><strong>Chưa có nhật ký.</strong></div>
+                }
+            </div>
         </div>
     </section>
 

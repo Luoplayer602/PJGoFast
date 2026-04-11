@@ -125,8 +125,12 @@
 
     .side-popup {
         position: absolute;
-        inset: 16px 16px 16px auto;
-        width: min(92%, 360px);
+        left: 16px;
+        right: 16px;
+        bottom: 16px;
+        width: auto;
+        max-height: 60%;
+        overflow: auto;
         background: rgba(255,255,255,.98);
         backdrop-filter: blur(10px);
         border: 1px solid #bfdbfe;
@@ -257,6 +261,7 @@
 <div id="inlineToast" class="toast-inline"></div>
 
 @section Scripts {
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
 <script>
     const antiToken = document.querySelector('#antiForgeryHost input')?.value ?? '';
     let dashboard = @Html.Raw(JsonSerializer.Serialize(Model, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
@@ -315,7 +320,7 @@
 
         popup.classList.add('show');
         popup.innerHTML = `
-            <h3>Chi tiết chuyến</h3>
+            <div class="d-flex justify-content-between align-items-center mb-2"><h3 class="mb-0">Chi tiết chuyến</h3><button class="btn btn-sm btn-light" onclick="closeTripPopup()">X</button></div>
             <div class="popup-item"><small>Mã chuyến</small><strong>${trip.idChuyenDi}</strong></div>
             <div class="popup-item"><small>Khách hàng</small><strong>${trip.khachHang?.hoVaTen ?? 'Chưa rõ'} · ${trip.khachHang?.sdt ?? ''}</strong></div>
             <div class="popup-item"><small>Điểm đón</small><strong>${trip.diemDon}</strong></div>
@@ -336,7 +341,7 @@
 
         popup.classList.add('show');
         popup.innerHTML = `
-            <h3>Chi tiết tài xế</h3>
+            <div class="d-flex justify-content-between align-items-center mb-2"><h3 class="mb-0">Chi tiết tài xế</h3><button class="btn btn-sm btn-light" onclick="closeDriverPopup()">X</button></div>
             <div class="popup-item"><small>Mã tài xế</small><strong>${driver.idTX}</strong></div>
             <div class="popup-item"><small>Họ tên</small><strong>${driver.hoVaTen}</strong></div>
             <div class="popup-item"><small>Số điện thoại</small><strong>${driver.sdt}</strong></div>
@@ -366,11 +371,13 @@
         selectedTripId = id;
         renderAll();
     }
+    function closeTripPopup(){ selectedTripId = null; renderAll(); }
 
     function selectDriver(id) {
         selectedDriverId = id;
         renderAll();
     }
+    function closeDriverPopup(){ selectedDriverId = null; renderAll(); }
 
     async function assignTrip() {
         if (!selectedTripId || !selectedDriverId) {
@@ -412,7 +419,12 @@
         }
     }
 
+    const connection = new signalR.HubConnectionBuilder().withUrl('/hubs/notification').withAutomaticReconnect().build();
+    connection.on('DashboardChanged', refreshDashboard);
+    connection.on('TripChanged', refreshDashboard);
+    connection.start().catch(() => {});
+
     renderAll();
-    setInterval(refreshDashboard, 8000);
+    setInterval(refreshDashboard, 20000);
 </script>
 }
