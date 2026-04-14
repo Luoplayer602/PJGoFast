@@ -471,6 +471,15 @@ function updatePhoneFeedback() {
         phoneFbText.textContent = ' ';
         return;
     }
+	
+	if (/[a-zA-Z]/.test(val)) {
+        phoneInput.classList.add('is-invalid-phone');
+        phoneInput.classList.remove('is-valid-phone');
+        phoneFeedback.className = 'phone-feedback invalid';
+        phoneFeedback.querySelector('i').className = 'bi bi-x-circle-fill';
+        phoneFbText.textContent = 'Số điện thoại chỉ được chứa số, không chứa chữ cái';
+        return; // Dừng hàm tại đây, không chạy các kiểm tra bên dưới nữa
+    }
 
     if (isPossiblyPhone(val)) {
         // Đang gõ, chưa đủ số
