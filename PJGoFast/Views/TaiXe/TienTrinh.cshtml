@@ -356,6 +356,7 @@
 </div>
 
 @section Scripts {
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
 <script>
     const tripId = '@Model.IdChuyenDi';
     let tripData = @Html.Raw(JsonSerializer.Serialize(Model, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
@@ -395,7 +396,7 @@
         }).join('');
 
         document.getElementById('statusChip').innerHTML = `<i class="bi bi-flag"></i>${tripData.trangThai}`;
-        document.getElementById('paymentButton').disabled = !(tripData.trangThai === 'HOAN_TAT' && !tripData.hasPayment);
+        document.getElementById('paymentButton').disabled = !!tripData.hasPayment;
         document.getElementById('paymentStatus').textContent = tripData.hasPayment
             ? `${tripData.phuongThucThanhToan} · ${Number(tripData.soTienThanhToan || 0).toLocaleString('vi-VN')} đ`
             : 'Chưa xác nhận';
@@ -431,8 +432,13 @@
         }
     }
 
+    const connection = new signalR.HubConnectionBuilder().withUrl('/hubs/notification').withAutomaticReconnect().build();
+    connection.on('TripChanged', (id) => { if (id === tripId) refreshTrip(); });
+    connection.on('DashboardChanged', refreshTrip);
+    connection.start().catch(() => {});
+
     renderTimeline();
     renderLogs();
-    setInterval(refreshTrip, 7000);
+    setInterval(refreshTrip, 20000);
 </script>
 }

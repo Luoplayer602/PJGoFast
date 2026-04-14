@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.SignalR;
 using PJGoFast.Data;
+using PJGoFast.Hubs;
 using PJGoFast.Models.Entities;
 using PJGoFast.Models.Enums;
 using PJGoFast.Services.Interfaces;
@@ -18,8 +20,13 @@ namespace PJGoFast.Services.Implementations
         ];
 
         private readonly PJGoFastDbContext _context;
+        private readonly IHubContext<NotificationHub> _hubContext;
 
-        public ChuyenDiService(PJGoFastDbContext context) => _context = context;
+        public ChuyenDiService(PJGoFastDbContext context, IHubContext<NotificationHub> hubContext)
+        {
+            _context = context;
+            _hubContext = hubContext;
+        }
 
         public string TaoChuyenDi(string diemDon, string diemDen, DateTime TGDon, LoaiXe loaiXe, string ghiChu, string IdKhachHang)
         {
@@ -116,7 +123,7 @@ namespace PJGoFast.Services.Implementations
             }
 
             AddLog(chuyen, trangThaiCu.ToString(), TrangThaiChuyen.HUY.ToString(), "KH", "Khách hàng hủy chuyến.");
-            _context.SaveChanges();
+            SaveChangesAndNotify(chuyen.IdChuyenDi);
             return true;
         }
 
@@ -167,7 +174,7 @@ namespace PJGoFast.Services.Implementations
 
             chuyen.TrangThai = TrangThaiChuyen.MOI;
             AddLog(chuyen, TrangThaiChuyen.CHO.ToString(), TrangThaiChuyen.MOI.ToString(), "KH", "Khách hàng xác nhận báo giá và phát hành chuyến mới.");
-            _context.SaveChanges();
+            SaveChangesAndNotify(chuyen.IdChuyenDi);
             return true;
         }
 
@@ -435,7 +442,7 @@ namespace PJGoFast.Services.Implementations
             chuyen.IdAdmin = idAdmin;
             chuyen.HanNhanChuyen = DateTime.Now.AddMinutes(2);
             AddLog(chuyen, TrangThaiChuyen.MOI.ToString(), TrangThaiChuyen.DA_PHAN_CONG.ToString(), "Admin", $"Điều phối phân công chuyến cho tài xế {taiXe.HoVaTen} ({taiXe.IdTX}).");
-            _context.SaveChanges();
+            SaveChangesAndNotify(chuyen.IdChuyenDi);
 
             return (true, "Đã phân công chuyến đi.");
         }
@@ -474,7 +481,7 @@ namespace PJGoFast.Services.Implementations
             chuyen.HanNhanChuyen = null;
             taiXe.TrangThaiOnline = TrangThaiOnline.BUSY;
             AddLog(chuyen, trangThaiCu.ToString(), TrangThaiChuyen.DA_NHAN.ToString(), "TX", $"Tài xế {taiXe.HoVaTen} nhận chuyến.");
-            _context.SaveChanges();
+            SaveChangesAndNotify(chuyen.IdChuyenDi);
 
             return (true, "Đã nhận chuyến, chuyển sang cập nhật tiến trình.", chuyen.IdChuyenDi);
         }
@@ -500,7 +507,7 @@ namespace PJGoFast.Services.Implementations
                 tuDong
                     ? $"Hết thời gian phản hồi. Hệ thống tự động từ chối phân công của tài xế {taiXe?.HoVaTen ?? idTX} và trả chuyến về trạng thái mới."
                     : $"Tài xế {taiXe?.HoVaTen ?? idTX} từ chối chuyến được phân công. Điều phối cần xử lý lại.");
-            _context.SaveChanges();
+            SaveChangesAndNotify(chuyen.IdChuyenDi);
             return (true, "Đã từ chối chuyến được phân công.");
         }
 
@@ -544,7 +551,7 @@ namespace PJGoFast.Services.Implementations
             };
 
             AddLog(chuyen, trangThaiCu.ToString(), trangThaiMoi.ToString(), "TX", logText);
-            _context.SaveChanges();
+            SaveChangesAndNotify(chuyen.IdChuyenDi);
             return (true, "Đã cập nhật tiến trình chuyến đi.");
         }
 
@@ -568,7 +575,7 @@ namespace PJGoFast.Services.Implementations
             chuyen.HanNhanChuyen = null;
             taiXe.TrangThaiOnline = TrangThaiOnline.ONLINE;
             AddLog(chuyen, trangThaiCu.ToString(), TrangThaiChuyen.HUY.ToString(), "TX", "Tài xế hủy chuyến.");
-            _context.SaveChanges();
+            SaveChangesAndNotify(chuyen.IdChuyenDi);
             return (true, "Đã hủy chuyến đi.");
         }
 
@@ -584,9 +591,9 @@ namespace PJGoFast.Services.Implementations
                 return (false, "Không tìm thấy chuyến đi hoặc tài xế.");
             }
 
-            if (chuyen.TrangThai != TrangThaiChuyen.HOAN_TAT)
+            if (chuyen.TrangThai == TrangThaiChuyen.HUY || chuyen.TrangThai == TrangThaiChuyen.CHO)
             {
-                return (false, "Chỉ xác nhận thanh toán sau khi hoàn tất chuyến.");
+                return (false, "Không thể xác nhận thanh toán cho chuyến chưa được xử lý hoặc đã hủy.");
             }
 
             if (chuyen.ThanhToan != null)
@@ -612,7 +619,7 @@ namespace PJGoFast.Services.Implementations
             _context.ThanhToans.Add(thanhToan);
             taiXe.TrangThaiOnline = TrangThaiOnline.ONLINE;
             AddLog(chuyen, chuyen.TrangThai.ToString(), chuyen.TrangThai.ToString(), "TX", $"Tài xế xác nhận thanh toán qua {phuongThucThanhToan} với số tiền {soTienThanhToan:N0} đ.");
-            _context.SaveChanges();
+            SaveChangesAndNotify(chuyen.IdChuyenDi);
             return (true, "Đã ghi nhận thanh toán.");
         }
 
@@ -648,7 +655,7 @@ namespace PJGoFast.Services.Implementations
             return trangThai == TrangThaiChuyen.HOAN_TAT && !daCoThanhToan;
         }
 
-        private void XuLyPhanCongHetHan()
+        public int XuLyPhanCongHetHanTuDong()
         {
             var now = DateTime.Now;
             var expiredTrips = _context.ChuyenDis
@@ -657,7 +664,7 @@ namespace PJGoFast.Services.Implementations
 
             if (!expiredTrips.Any())
             {
-                return;
+                return 0;
             }
 
             foreach (var trip in expiredTrips)
@@ -670,7 +677,32 @@ namespace PJGoFast.Services.Implementations
                 AddLog(trip, oldStatus.ToString(), TrangThaiChuyen.MOI.ToString(), "System", $"Hết thời gian nhận chuyến. Hệ thống tự động từ chối phân công của tài xế {oldDriverId ?? "không xác định"}.");
             }
 
+            SaveChangesAndNotify(expiredTrips.Select(x => x.IdChuyenDi).ToArray());
+            return expiredTrips.Count;
+        }
+
+        private void XuLyPhanCongHetHan() => XuLyPhanCongHetHanTuDong();
+
+        private void SaveChangesAndNotify(params string[] tripIds)
+        {
             _context.SaveChanges();
+            NotifyRealtime(tripIds);
+        }
+
+        private void NotifyRealtime(params string[] tripIds)
+        {
+            var ids = tripIds.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().ToArray();
+            if (ids.Length == 0)
+            {
+                _hubContext.Clients.All.SendAsync("DashboardChanged").GetAwaiter().GetResult();
+                return;
+            }
+
+            _hubContext.Clients.All.SendAsync("DashboardChanged").GetAwaiter().GetResult();
+            foreach (var id in ids)
+            {
+                _hubContext.Clients.All.SendAsync("TripChanged", id).GetAwaiter().GetResult();
+            }
         }
 
         private void AddLog(ChuyenDi chuyen, string trangThaiCu, string trangThaiMoi, string thucHienBoi, string logText)

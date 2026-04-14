@@ -1,32 +1,613 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
 @{
+    Layout = null; // Trang đứng độc lập, không cần layout
 }
-<div>
-    @if (!string.IsNullOrEmpty(ViewBag.Error))
-    {
-        <div class="alert alert-danger">@ViewBag.Error</div>
-    }
-    <form asp-action="Register" asp-controller="Login" method="post">
-        <div class="form-floating mb-4">
-            <input class="form-control" id="sdt" name="sdt" type="text" placeholder="Nhập số điện thoại..." required />
-            <label for="sdt">Số điện thoại</label>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Đăng ký — GoFast</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+    <style>
+        /* ── Reset & base ─────────────────────────────────── */
+        *, *::before, *::after { box-sizing: border-box; }
+
+        html, body {
+            min-height: 100vh;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #f0f4fb;
+        }
+
+        /* ── Split layout ─────────────────────────────────── */
+        .page-wrap {
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        /* ── Left panel — brand ── */
+        .brand-panel {
+            background: linear-gradient(160deg, #0f172a 0%, #1e3a8a 50%, #2563eb 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 60px 56px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .brand-panel::before {
+            content: '';
+            position: absolute;
+            top: -120px; right: -120px;
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(96,165,250,.18) 0%, transparent 65%);
+            pointer-events: none;
+        }
+        .brand-panel::after {
+            content: '';
+            position: absolute;
+            bottom: -80px; left: -80px;
+            width: 320px; height: 320px;
+            background: radial-gradient(circle, rgba(37,99,235,.14) 0%, transparent 65%);
+            pointer-events: none;
+        }
+
+        .brand-logo {
+            display: flex; align-items: center; gap: 12px;
+            font-size: 1.6rem; font-weight: 900;
+            color: #fff; letter-spacing: -.02em;
+            margin-bottom: 56px; text-decoration: none;
+        }
+        .brand-logo .logo-icon {
+            width: 46px; height: 46px; border-radius: 14px;
+            background: rgba(255,255,255,.16);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.3rem;
+        }
+
+        .brand-tagline {
+            font-size: clamp(1.6rem, 2.5vw, 2.4rem);
+            font-weight: 800; color: #fff;
+            line-height: 1.25; letter-spacing: -.02em;
+            margin-bottom: 20px;
+        }
+        .brand-tagline span { color: #93c5fd; }
+
+        .brand-desc {
+            color: rgba(255,255,255,.65);
+            font-size: .98rem; line-height: 1.7;
+            max-width: 380px; margin-bottom: 48px;
+        }
+
+        .brand-features { display: flex; flex-direction: column; gap: 14px; }
+        .feature-item {
+            display: flex; align-items: center; gap: 12px;
+            color: rgba(255,255,255,.85); font-size: .88rem;
+        }
+        .feature-item .fi-icon {
+            width: 32px; height: 32px; border-radius: 10px;
+            background: rgba(255,255,255,.12);
+            display: flex; align-items: center; justify-content: center;
+            font-size: .85rem; flex-shrink: 0;
+        }
+
+        /* ── Right panel — form ── */
+        .form-panel {
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            padding: 48px 32px;
+            background: #f0f4fb;
+        }
+
+        .form-box {
+            width: 100%; max-width: 440px;
+        }
+
+        .form-title {
+            font-size: 1.6rem; font-weight: 800;
+            color: #0f172a; letter-spacing: -.02em;
+            margin-bottom: 4px;
+        }
+        .form-subtitle {
+            color: #64748b; font-size: .9rem;
+            margin-bottom: 32px;
+        }
+
+        /* ── Card ── */
+        .register-card {
+            background: #fff;
+            border-radius: 24px;
+            padding: 32px 28px;
+            box-shadow: 0 8px 40px rgba(15,23,42,.08), 0 1px 4px rgba(15,23,42,.04);
+        }
+
+        /* ── Phone field ── */
+        .phone-field-wrap { position: relative; margin-bottom: 6px; }
+
+        .phone-prefix {
+            position: absolute; left: 0; top: 0; bottom: 0;
+            width: 72px;
+            display: flex; align-items: center; justify-content: center;
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-right: none;
+            border-radius: 14px 0 0 14px;
+            font-size: .88rem; font-weight: 700;
+            color: #374151; user-select: none;
+            transition: border-color .15s;
+            cursor: default;
+        }
+        .phone-input {
+            width: 100%; padding: 14px 16px 14px 82px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 14px 14px 14px 14px;
+            font-size: .95rem; color: #111827;
+            background: #fff; outline: none;
+            transition: border-color .15s, box-shadow .15s;
+            min-height: 52px;
+        }
+        .phone-input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+        }
+        .phone-input:focus ~ .phone-prefix,
+        .phone-field-wrap:focus-within .phone-prefix {
+            border-color: #2563eb;
+        }
+        /* State colors */
+        .phone-input.is-valid-phone { border-color: #16a34a; }
+        .phone-input.is-valid-phone:focus { box-shadow: 0 0 0 3px rgba(22,163,74,.12); }
+        .phone-input.is-invalid-phone { border-color: #dc2626; }
+        .phone-input.is-invalid-phone:focus { box-shadow: 0 0 0 3px rgba(220,38,38,.12); }
+
+        .phone-feedback {
+            display: flex; align-items: center; gap: 6px;
+            font-size: .79rem; margin-top: 6px;
+            min-height: 20px; transition: opacity .15s;
+        }
+        .phone-feedback.valid   { color: #16a34a; }
+        .phone-feedback.invalid { color: #dc2626; }
+        .phone-feedback.neutral { color: transparent; }
+
+        /* ── Generic input field ── */
+        .field-wrap { margin-bottom: 18px; }
+        .field-label {
+            display: block; font-size: .82rem; font-weight: 700;
+            color: #374151; margin-bottom: 7px; letter-spacing: .01em;
+        }
+        .input-icon-wrap {
+            position: relative;
+        }
+        .input-icon-wrap .icon {
+            position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+            color: #94a3b8; font-size: 1rem; pointer-events: none;
+        }
+        .field-input {
+            width: 100%; padding: 14px 16px 14px 44px;
+            border: 1.5px solid #e2e8f0; border-radius: 14px;
+            font-size: .95rem; color: #111827; background: #fff;
+            outline: none; transition: border-color .15s, box-shadow .15s;
+            min-height: 52px;
+        }
+        .field-input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+        }
+
+        /* Eye toggle */
+        .eye-toggle {
+            position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; color: #94a3b8;
+            cursor: pointer; padding: 4px; font-size: 1rem;
+            transition: color .15s;
+        }
+        .eye-toggle:hover { color: #374151; }
+        .field-input.has-eye { padding-right: 44px; }
+
+        /* ── Password strength ── */
+        .strength-bar-wrap { margin-top: 8px; }
+        .strength-track {
+            height: 4px; border-radius: 4px; background: #e2e8f0;
+            overflow: hidden; margin-bottom: 5px;
+        }
+        .strength-fill {
+            height: 100%; border-radius: 4px;
+            width: 0%; transition: width .3s ease, background .3s ease;
+        }
+        .strength-label { font-size: .75rem; color: #94a3b8; }
+
+        /* ── Error alert ── */
+        .error-alert {
+            background: #fef2f2; border: 1.5px solid #fca5a5;
+            border-radius: 14px; padding: 12px 16px;
+            display: flex; align-items: flex-start; gap: 10px;
+            font-size: .86rem; color: #991b1b; margin-bottom: 20px;
+        }
+        .error-alert i { flex-shrink: 0; margin-top: 1px; }
+
+        /* ── Submit button ── */
+        .btn-register {
+            width: 100%; padding: 14px;
+            background: #2563eb; color: #fff;
+            border: none; border-radius: 14px;
+            font-size: .97rem; font-weight: 800;
+            cursor: pointer; letter-spacing: .01em;
+            transition: background .15s, transform .1s, box-shadow .15s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-register:hover {
+            background: #1d4ed8; transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(37,99,235,.3);
+        }
+        .btn-register:active { transform: translateY(0); }
+
+        /* ── Login link ── */
+        .login-link {
+            text-align: center; margin-top: 20px;
+            font-size: .86rem; color: #64748b;
+        }
+        .login-link a {
+            color: #2563eb; font-weight: 700; text-decoration: none;
+        }
+        .login-link a:hover { text-decoration: underline; }
+
+        /* ── Divider ── */
+        .field-divider {
+            border: none; border-top: 1.5px dashed #e2e8f0;
+            margin: 22px 0 20px;
+        }
+        .divider-label {
+            font-size: .74rem; font-weight: 800; text-transform: uppercase;
+            letter-spacing: .07em; color: #94a3b8;
+            margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+        }
+        .divider-label::before, .divider-label::after {
+            content: ''; flex: 1; height: 1px; background: #e2e8f0;
+        }
+
+        /* ── Responsive ── */
+        @@media (max-width: 768px) {
+            .page-wrap { grid-template-columns: 1fr; }
+            .brand-panel { display: none; }
+            .form-panel { padding: 32px 20px; }
+            .form-box { max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="page-wrap">
+
+    <!-- ── LEFT: Brand panel ── -->
+    <div class="brand-panel">
+        <a class="brand-logo" href="/">
+            <div class="logo-icon"><i class="bi bi-lightning-charge-fill"></i></div>
+            GoFast
+        </a>
+
+        <div class="brand-tagline">
+            Di chuyển <span>nhanh hơn</span>,<br>
+            đặt xe <span>dễ hơn</span>.
         </div>
 
-        <div class="form-floating mb-4">
-            <input class="form-control" id="matKhau" name="matKhau" type="password" placeholder="Nhập mật khẩu..." required />
-            <label for="matKhau">Mật khẩu</label>
-        </div>
+        <p class="brand-desc">
+            Tạo tài khoản GoFast để đặt chuyến đi mọi lúc, mọi nơi — chỉ trong vài giây.
+        </p>
 
-        <div class="form-floating mb-4">
-            <input class="form-control" id="confirmMatKhau" name="confirmMatKhau" type="password" placeholder="Xác nhận mật khẩu..." required />
-            <label for="confirmMatKhau">Xác nhận mật khẩu</label>
+        <div class="brand-features">
+            <div class="feature-item">
+                <div class="fi-icon"><i class="bi bi-shield-fill-check" style="color:#86efac;"></i></div>
+                <span>Thông tin được bảo mật tuyệt đối</span>
+            </div>
+            <div class="feature-item">
+                <div class="fi-icon"><i class="bi bi-clock-fill" style="color:#fde68a;"></i></div>
+                <span>Đặt xe trong dưới 30 giây</span>
+            </div>
+            <div class="feature-item">
+                <div class="fi-icon"><i class="bi bi-geo-alt-fill" style="color:#f9a8d4;"></i></div>
+                <span>Theo dõi tài xế theo thời gian thực</span>
+            </div>
         </div>
+    </div>
 
-        <div class="d-grid mt-4 mb-0">
-            <button class="btn btn-primary btn-block" type="submit">Đăng ký</button>
+    <!-- ── RIGHT: Form panel ── -->
+    <div class="form-panel">
+        <div class="form-box">
+
+            <div class="form-title">Tạo tài khoản</div>
+            <p class="form-subtitle">Điền thông tin bên dưới để bắt đầu sử dụng GoFast.</p>
+
+            <div class="register-card">
+
+                @if (!string.IsNullOrEmpty(ViewBag.Error))
+                {
+                    <div class="error-alert">
+                        <i class="bi bi-exclamation-circle-fill"></i>
+                        <span>@ViewBag.Error</span>
+                    </div>
+                }
+
+                <form asp-action="Register" asp-controller="Login" method="post" id="registerForm" novalidate>
+
+                    @Html.AntiForgeryToken()
+
+                    <!-- ── Số điện thoại ── -->
+                    <div class="field-wrap" style="margin-bottom:6px;">
+                        <label class="field-label" for="sdt">
+                            Số điện thoại <span style="color:#ef4444;">*</span>
+                        </label>
+                        <div class="phone-field-wrap" id="phoneWrap">
+                            <div class="phone-prefix" id="phonePrefix">+84</div>
+                            <input class="phone-input"
+                                   id="sdt" name="sdt" type="tel"
+                                   placeholder="0912 345 678"
+                                   autocomplete="tel"
+                                   maxlength="15"
+                                   required />
+                        </div>
+                        <div class="phone-feedback neutral" id="phoneFeedback">
+                            <i class="bi bi-info-circle"></i>
+                            <span id="phoneFeedbackText"> </span>
+                        </div>
+                    </div>
+
+                    <hr class="field-divider" />
+                    <div class="divider-label">Mật khẩu</div>
+
+                    <!-- ── Mật khẩu ── -->
+                    <div class="field-wrap">
+                        <label class="field-label" for="matKhau">
+                            Mật khẩu <span style="color:#ef4444;">*</span>
+                        </label>
+                        <div class="input-icon-wrap">
+                            <i class="bi bi-key-fill icon"></i>
+                            <input class="field-input has-eye"
+                                   id="matKhau" name="matKhau" type="password"
+                                   placeholder="Tối thiểu 6 ký tự"
+                                   autocomplete="new-password"
+                                   required />
+                            <button type="button" class="eye-toggle" id="eyeMatKhau"
+                                    onclick="toggleEye('matKhau','eyeMatKhau')">
+                                <i class="bi bi-eye" id="eyeMatKhauIcon"></i>
+                            </button>
+                        </div>
+                        <!-- Password strength -->
+                        <div class="strength-bar-wrap" id="strengthWrap" style="display:none;">
+                            <div class="strength-track">
+                                <div class="strength-fill" id="strengthFill"></div>
+                            </div>
+                            <span class="strength-label" id="strengthLabel"></span>
+                        </div>
+                    </div>
+
+                    <!-- ── Xác nhận mật khẩu ── -->
+                    <div class="field-wrap" style="margin-bottom:24px;">
+                        <label class="field-label" for="confirmMatKhau">
+                            Xác nhận mật khẩu <span style="color:#ef4444;">*</span>
+                        </label>
+                        <div class="input-icon-wrap">
+                            <i class="bi bi-shield-lock-fill icon"></i>
+                            <input class="field-input has-eye"
+                                   id="confirmMatKhau" name="confirmMatKhau" type="password"
+                                   placeholder="Nhập lại mật khẩu"
+                                   autocomplete="new-password"
+                                   required />
+                            <button type="button" class="eye-toggle" id="eyeConfirm"
+                                    onclick="toggleEye('confirmMatKhau','eyeConfirm')">
+                                <i class="bi bi-eye" id="eyeConfirmIcon"></i>
+                            </button>
+                        </div>
+                        <div class="phone-feedback neutral" id="confirmFeedback">
+                            <i class="bi bi-info-circle"></i>
+                            <span id="confirmFeedbackText"> </span>
+                        </div>
+                    </div>
+
+                    <!-- ── Submit ── -->
+                    <button type="submit" class="btn-register" id="submitBtn">
+                        <i class="bi bi-person-plus-fill"></i> Tạo tài khoản
+                    </button>
+
+                </form>
+            </div>
+
+            <div class="login-link">
+                Đã có tài khoản? <a asp-controller="Login" asp-action="Index">Đăng nhập ngay</a>
+            </div>
+
         </div>
-        
-    </form>
+    </div>
+
 </div>
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// ══════════════════════════════════════════════════════
+//  Đầu số hợp lệ Việt Nam (cập nhật 2024)
+//  Viettel  : 032–039, 086, 096–098
+//  Mobifone : 070, 076–079, 089, 090, 093
+//  Vinaphone: 081–085, 088, 091, 094
+//  Vietnamob: 052, 056, 058, 092
+//  Gmobile  : 059, 099
+//  Itelecom : 087
+//
+//  Regex giải thích:
+//    ^(0|\+84)            → bắt đầu bằng 0 hoặc +84
+//    (3[2-9]              → 032–039  (Viettel)
+//    |5[2689]             → 052, 056, 058, 059  (Vietnamobile/Gmobile)
+//    |7[06-9]             → 070, 076, 077, 078, 079  (Mobifone)
+//    |8[1-9]              → 081–089  (Vina/Mobi/Itel)
+//    |9[0-46-9])          → 090–094, 096–099  (Mobi/Vina/VNM/G/Viettel)
+//    \d{7}$               → 7 chữ số còn lại
+// ══════════════════════════════════════════════════════
+const VN_PHONE_RE = /^(0|\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-46-9])\d{7}$/;
+
+function isValidVNPhone(val) {
+    const clean = val.replace(/[\s\-\.]/g, '');
+    return VN_PHONE_RE.test(clean);
+}
+
+function isPossiblyPhone(val) {
+    // Đang gõ nhưng chưa đủ độ dài → chưa invalid
+    const clean = val.replace(/[\s\-\.]/g, '');
+    return clean.length < 10;
+}
+
+// ── Phone validation ──────────────────────────────────
+const phoneInput    = document.getElementById('sdt');
+const phoneFeedback = document.getElementById('phoneFeedback');
+const phoneFbText   = document.getElementById('phoneFeedbackText');
+
+function updatePhoneFeedback() {
+    const val = phoneInput.value.trim();
+
+    if (!val) {
+        phoneInput.classList.remove('is-valid-phone', 'is-invalid-phone');
+        phoneFeedback.className = 'phone-feedback neutral';
+        phoneFbText.textContent = ' ';
+        return;
+    }
+	
+	if (/[a-zA-Z]/.test(val)) {
+        phoneInput.classList.add('is-invalid-phone');
+        phoneInput.classList.remove('is-valid-phone');
+        phoneFeedback.className = 'phone-feedback invalid';
+        phoneFeedback.querySelector('i').className = 'bi bi-x-circle-fill';
+        phoneFbText.textContent = 'Số điện thoại chỉ được chứa số, không chứa chữ cái';
+        return; // Dừng hàm tại đây, không chạy các kiểm tra bên dưới nữa
+    }
+
+    if (isPossiblyPhone(val)) {
+        // Đang gõ, chưa đủ số
+        phoneInput.classList.remove('is-valid-phone', 'is-invalid-phone');
+        phoneFeedback.className = 'phone-feedback neutral';
+        phoneFbText.textContent = ' ';
+        return;
+    }
+
+    if (isValidVNPhone(val)) {
+        phoneInput.classList.add('is-valid-phone');
+        phoneInput.classList.remove('is-invalid-phone');
+        phoneFeedback.className = 'phone-feedback valid';
+        phoneFeedback.querySelector('i').className = 'bi bi-check-circle-fill';
+        phoneFbText.textContent = 'Số điện thoại hợp lệ';
+    } else {
+        phoneInput.classList.add('is-invalid-phone');
+        phoneInput.classList.remove('is-valid-phone');
+        phoneFeedback.className = 'phone-feedback invalid';
+        phoneFeedback.querySelector('i').className = 'bi bi-x-circle-fill';
+
+        const clean = val.replace(/[\s\-\.]/g, '');
+        if (clean.startsWith('+') && !clean.startsWith('+84')) {
+            phoneFbText.textContent = 'Chỉ hỗ trợ số Việt Nam (+84)';
+        } else if (clean.length !== 10 && !(clean.startsWith('+84') && clean.length === 12)) {
+            phoneFbText.textContent = 'Số điện thoại phải có 10 chữ số';
+        } else {
+            phoneFbText.textContent = 'Đầu số không hợp lệ — vui lòng kiểm tra lại';
+        }
+    }
+}
+
+phoneInput.addEventListener('input', updatePhoneFeedback);
+phoneInput.addEventListener('blur',  updatePhoneFeedback);
+
+// ── Password strength ─────────────────────────────────
+const matKhauInput  = document.getElementById('matKhau');
+const strengthWrap  = document.getElementById('strengthWrap');
+const strengthFill  = document.getElementById('strengthFill');
+const strengthLabel = document.getElementById('strengthLabel');
+
+function calcStrength(pwd) {
+    let score = 0;
+    if (pwd.length >= 6)  score++;
+    if (pwd.length >= 10) score++;
+    if (/[A-Z]/.test(pwd)) score++;
+    if (/[0-9]/.test(pwd)) score++;
+    if (/[^A-Za-z0-9]/.test(pwd)) score++;
+    return score;
+}
+
+matKhauInput.addEventListener('input', () => {
+    const val = matKhauInput.value;
+    if (!val) { strengthWrap.style.display = 'none'; return; }
+    strengthWrap.style.display = 'block';
+
+    const s = calcStrength(val);
+    const configs = [
+        { w: '20%',  bg: '#ef4444', label: 'Rất yếu' },
+        { w: '40%',  bg: '#f97316', label: 'Yếu' },
+        { w: '60%',  bg: '#eab308', label: 'Trung bình' },
+        { w: '80%',  bg: '#22c55e', label: 'Mạnh' },
+        { w: '100%', bg: '#16a34a', label: 'Rất mạnh' },
+    ];
+    const c = configs[Math.min(s, 4)];
+    strengthFill.style.width      = c.w;
+    strengthFill.style.background = c.bg;
+    strengthLabel.textContent     = c.label;
+    strengthLabel.style.color     = c.bg;
+
+    updateConfirmFeedback(); // cập nhật lại confirm nếu đã nhập
+});
+
+// ── Confirm password ──────────────────────────────────
+const confirmInput    = document.getElementById('confirmMatKhau');
+const confirmFeedback = document.getElementById('confirmFeedback');
+const confirmFbText   = document.getElementById('confirmFeedbackText');
+
+function updateConfirmFeedback() {
+    const val = confirmInput.value;
+    if (!val) {
+        confirmFeedback.className = 'phone-feedback neutral';
+        confirmFbText.textContent = ' ';
+        return;
+    }
+    if (val === matKhauInput.value) {
+        confirmFeedback.className = 'phone-feedback valid';
+        confirmFeedback.querySelector('i').className = 'bi bi-check-circle-fill';
+        confirmFbText.textContent = 'Mật khẩu khớp';
+    } else {
+        confirmFeedback.className = 'phone-feedback invalid';
+        confirmFeedback.querySelector('i').className = 'bi bi-x-circle-fill';
+        confirmFbText.textContent = 'Mật khẩu chưa khớp';
+    }
+}
+
+confirmInput.addEventListener('input', updateConfirmFeedback);
+confirmInput.addEventListener('blur',  updateConfirmFeedback);
+
+// ── Show/hide password ────────────────────────────────
+function toggleEye(inputId, btnId) {
+    const input = document.getElementById(inputId);
+    const icon  = document.getElementById(btnId + 'Icon');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'bi bi-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'bi bi-eye';
+    }
+}
+
+// ── Form submit guard ─────────────────────────────────
+document.getElementById('registerForm').addEventListener('submit', function(e) {
+    updatePhoneFeedback();
+    updateConfirmFeedback();
+
+    const phoneOk  = isValidVNPhone(phoneInput.value.trim());
+    const pwdOk    = matKhauInput.value.length >= 6;
+    const matchOk  = matKhauInput.value === confirmInput.value;
+
+    if (!phoneOk || !pwdOk || !matchOk) {
+        e.preventDefault();
+        if (!phoneOk)  phoneInput.focus();
+        else if (!pwdOk)   matKhauInput.focus();
+        else if (!matchOk) confirmInput.focus();
+    }
+});
+</script>
+</body>
+</html>
