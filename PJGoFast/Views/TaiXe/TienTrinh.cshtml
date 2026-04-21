@@ -273,7 +273,7 @@
                     <button type="button" class="btn btn-outline-danger" onclick="showModal('Hủy chuyến', 'Bạn sẽ chuyển chuyến đi về trạng thái hủy.', 'cancelForm')">
                         <i class="bi bi-x-circle me-1"></i> Hủy chuyến
                     </button>
-                    <button type="button" class="btn btn-warning text-white" id="paymentButton" onclick="paymentModal.show()" disabled>
+                    <button type="button" class="btn btn-warning text-white" id="paymentButton" onclick="paymentModal.show()">
                         <i class="bi bi-credit-card me-1"></i> Xác nhận thanh toán
                     </button>
                     <a asp-action="Index" class="btn btn-light border">
@@ -364,6 +364,22 @@
     const paymentModal = new bootstrap.Modal(document.getElementById('paymentModal'));
     let targetForm = '';
 
+    // Ensure trangThai is a string (handle both enum name and numeric values)
+    if (typeof tripData.trangThai !== 'string') {
+        const trangThaiMap = {
+            0: 'MOI',
+            1: 'DA_PHAN_CONG',
+            2: 'DA_NHAN',
+            3: 'DANG_DON',
+            4: 'DA_DON',
+            5: 'DANG_DI_CHUYEN',
+            6: 'HOAN_TAT',
+            7: 'HUY',
+            8: 'CHO'
+        };
+        tripData.trangThai = trangThaiMap[tripData.trangThai] || tripData.trangThai.toString();
+    }
+
     const steps = [
         { status: 'DANG_DON', label: 'Đang đón', icon: 'bi-car-front-fill' },
         { status: 'DA_DON', label: 'Đã đón', icon: 'bi-person-check-fill' },
@@ -380,11 +396,13 @@
     function renderTimeline() {
         const root = document.getElementById('timelineRoot');
         const idx = currentIndex();
+        console.log('Current Index:', idx, 'Current Status:', tripData.trangThai);
         root.innerHTML = steps.map((step, index) => {
             const stepIndex = order.indexOf(step.status);
             const done = idx > stepIndex;
             const current = tripData.trangThai === step.status;
             const enabled = idx + 1 === stepIndex;
+            console.log(`Step: ${step.status}, stepIndex: ${stepIndex}, idx: ${idx}, enabled: ${enabled}`);
             return `
                 <div class="timeline-item ${done ? 'done' : ''} ${current ? 'current' : ''}">
                     <div class="timeline-dot"><i class="bi ${step.icon}"></i></div>
@@ -396,7 +414,6 @@
         }).join('');
 
         document.getElementById('statusChip').innerHTML = `<i class="bi bi-flag"></i>${tripData.trangThai}`;
-        document.getElementById('paymentButton').disabled = !!tripData.hasPayment;
         document.getElementById('paymentStatus').textContent = tripData.hasPayment
             ? `${tripData.phuongThucThanhToan} · ${Number(tripData.soTienThanhToan || 0).toLocaleString('vi-VN')} đ`
             : 'Chưa xác nhận';

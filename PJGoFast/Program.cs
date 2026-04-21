@@ -26,6 +26,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
     {
         options.LoginPath = "/Login/Index";
+        options.AccessDeniedPath = "/Home/AccessDenied";
         options.Events = new CookieAuthenticationEvents
         {
             OnRedirectToLogin = context =>

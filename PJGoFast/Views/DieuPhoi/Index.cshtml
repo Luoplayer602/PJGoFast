@@ -28,8 +28,9 @@
 
     .dispatch-grid {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: 380px 1fr 380px;
         gap: 18px;
+        align-items: start;
     }
 
     .dispatch-card {
@@ -38,9 +39,34 @@
         border: 1px solid #dbe4f0;
         box-shadow: 0 10px 28px rgba(15,23,42,.06);
         overflow: hidden;
-        min-height: 640px;
         display: flex;
         flex-direction: column;
+        position: relative;
+    }
+
+    .dispatch-card.trips-col {
+        max-height: 640px;
+        min-height: 640px;
+    }
+
+    .dispatch-card.drivers-col {
+        max-height: 640px;
+        min-height: 640px;
+    }
+
+    .dispatch-card.detail-card {
+        min-height: 400px;
+        max-height: 640px;
+        opacity: 0;
+        pointer-events: none;
+        transform: scale(0.95);
+        transition: all 0.2s ease;
+    }
+
+    .dispatch-card.detail-card.show {
+        opacity: 1;
+        pointer-events: all;
+        transform: scale(1);
     }
 
     .dispatch-head {
@@ -67,6 +93,8 @@
         flex: 1;
         padding: 18px;
         background: #f8fbff;
+        display: flex;
+        flex-direction: column;
     }
 
     .dispatch-list {
@@ -75,6 +103,25 @@
         max-height: 540px;
         overflow: auto;
         padding-right: 4px;
+        flex: 1;
+    }
+
+    .detail-close-btn {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: none;
+        border: none;
+        font-size: 1.4rem;
+        color: #94a3b8;
+        cursor: pointer;
+        padding: 4px 8px;
+        transition: color .15s;
+        z-index: 10;
+    }
+
+    .detail-close-btn:hover {
+        color: #0f172a;
     }
 
     .dispatch-item {
@@ -123,34 +170,6 @@
     .status-pill.offline { background: #fee2e2; color: #b91c1c; }
     .status-pill.moi { background: #dbeafe; color: #1d4ed8; }
 
-    .side-popup {
-        position: absolute;
-        left: 16px;
-        right: 16px;
-        bottom: 16px;
-        width: auto;
-        max-height: 60%;
-        overflow: auto;
-        background: rgba(255,255,255,.98);
-        backdrop-filter: blur(10px);
-        border: 1px solid #bfdbfe;
-        border-radius: 22px;
-        box-shadow: 0 22px 44px rgba(15,23,42,.16);
-        padding: 18px;
-        display: none;
-        z-index: 10;
-    }
-
-    .side-popup.show {
-        display: block;
-    }
-
-    .side-popup h3 {
-        margin: 0 0 12px;
-        font-size: .95rem;
-        font-weight: 800;
-    }
-
     .popup-item + .popup-item {
         margin-top: 10px;
     }
@@ -169,9 +188,10 @@
 
     .dispatch-footer {
         display: flex;
-        justify-content: flex-end;
+        justify-content: center;
         gap: 12px;
         align-items: center;
+        margin-top: 20px;
     }
 
     .toast-inline {
@@ -205,12 +225,43 @@
         border: 1px solid #86efac;
     }
 
-    @@media (max-width: 992px) {
+    @@media (max-width: 1400px) {
         .dispatch-grid {
             grid-template-columns: 1fr;
         }
 
-        .dispatch-card {
+        .dispatch-card.detail-card {
+            position: fixed;
+            top: 140px;
+            width: 400px;
+            z-index: 150;
+        }
+
+        .dispatch-card.detail-card.trip-detail {
+            left: 20px;
+        }
+
+        .dispatch-card.detail-card.driver-detail {
+            right: 20px;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .dispatch-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .dispatch-card.detail-card {
+            position: fixed;
+            inset: 20px;
+            width: auto;
+            max-height: calc(100vh - 40px);
+            z-index: 150;
+        }
+
+        .dispatch-card.trips-col,
+        .dispatch-card.drivers-col {
+            max-height: 500px;
             min-height: auto;
         }
     }
@@ -223,29 +274,51 @@
     </section>
 
     <div class="dispatch-grid">
-        <section class="dispatch-card">
+        <!-- Trip Detail Card (LEFT) -->
+        <section class="dispatch-card detail-card" id="tripDetailCard">
+            <button class="detail-close-btn" onclick="closeTripPopup()"><i class="bi bi-x-lg"></i></button>
+            <div class="dispatch-head">
+                <h2>Chi tiết chuyến</h2>
+            </div>
+            <div class="dispatch-body">
+                <div id="tripDetailContent"></div>
+            </div>
+        </section>
+
+        <!-- Trip List (CENTER-LEFT) -->
+        <section class="dispatch-card trips-col">
             <div class="dispatch-head">
                 <div>
                     <h2>Danh sách chuyến mới</h2>
-                    <span id="tripCount">@Model.ChuyenMoi.Count chuyến</span>
+                    <span id="tripCount">0 chuyến</span>
                 </div>
             </div>
             <div class="dispatch-body">
                 <div class="dispatch-list" id="tripList"></div>
-                <aside class="side-popup" id="tripPopup"></aside>
             </div>
         </section>
 
-        <section class="dispatch-card">
+        <!-- Driver List (CENTER-RIGHT) -->
+        <section class="dispatch-card drivers-col">
             <div class="dispatch-head">
                 <div>
                     <h2>Danh sách tài xế</h2>
-                    <span id="driverCount">@Model.TaiXes.Count tài xế</span>
+                    <span id="driverCount">0 tài xế</span>
                 </div>
             </div>
             <div class="dispatch-body">
                 <div class="dispatch-list" id="driverList"></div>
-                <aside class="side-popup" id="driverPopup"></aside>
+            </div>
+        </section>
+
+        <!-- Driver Detail Card (RIGHT) -->
+        <section class="dispatch-card detail-card" id="driverDetailCard">
+            <button class="detail-close-btn" onclick="closeDriverPopup()"><i class="bi bi-x-lg"></i></button>
+            <div class="dispatch-head">
+                <h2>Chi tiết tài xế</h2>
+            </div>
+            <div class="dispatch-body">
+                <div id="driverDetailContent"></div>
             </div>
         </section>
     </div>
@@ -309,18 +382,19 @@
             </article>`;
     }
 
-    function renderTripPopup() {
+    function renderTripDetail() {
         const trip = (dashboard.chuyenMoi || []).find(x => x.idChuyenDi === selectedTripId);
-        const popup = document.getElementById('tripPopup');
+        const detailCard = document.getElementById('tripDetailCard');
+        const contentEl = document.getElementById('tripDetailContent');
+
         if (!trip) {
-            popup.classList.remove('show');
-            popup.innerHTML = '';
+            detailCard.classList.remove('show');
+            contentEl.innerHTML = '';
             return;
         }
 
-        popup.classList.add('show');
-        popup.innerHTML = `
-            <div class="d-flex justify-content-between align-items-center mb-2"><h3 class="mb-0">Chi tiết chuyến</h3><button class="btn btn-sm btn-light" onclick="closeTripPopup()">X</button></div>
+        detailCard.classList.add('show');
+        contentEl.innerHTML = `
             <div class="popup-item"><small>Mã chuyến</small><strong>${trip.idChuyenDi}</strong></div>
             <div class="popup-item"><small>Khách hàng</small><strong>${trip.khachHang?.hoVaTen ?? 'Chưa rõ'} · ${trip.khachHang?.sdt ?? ''}</strong></div>
             <div class="popup-item"><small>Điểm đón</small><strong>${trip.diemDon}</strong></div>
@@ -330,18 +404,19 @@
             <div class="popup-item"><small>Giá tạm tính</small><strong>${Number(trip.giaTamTinh || 0).toLocaleString('vi-VN')} đ</strong></div>`;
     }
 
-    function renderDriverPopup() {
+    function renderDriverDetail() {
         const driver = (dashboard.taiXes || []).find(x => x.idTX === selectedDriverId);
-        const popup = document.getElementById('driverPopup');
+        const detailCard = document.getElementById('driverDetailCard');
+        const contentEl = document.getElementById('driverDetailContent');
+
         if (!driver) {
-            popup.classList.remove('show');
-            popup.innerHTML = '';
+            detailCard.classList.remove('show');
+            contentEl.innerHTML = '';
             return;
         }
 
-        popup.classList.add('show');
-        popup.innerHTML = `
-            <div class="d-flex justify-content-between align-items-center mb-2"><h3 class="mb-0">Chi tiết tài xế</h3><button class="btn btn-sm btn-light" onclick="closeDriverPopup()">X</button></div>
+        detailCard.classList.add('show');
+        contentEl.innerHTML = `
             <div class="popup-item"><small>Mã tài xế</small><strong>${driver.idTX}</strong></div>
             <div class="popup-item"><small>Họ tên</small><strong>${driver.hoVaTen}</strong></div>
             <div class="popup-item"><small>Số điện thoại</small><strong>${driver.sdt}</strong></div>
@@ -363,8 +438,8 @@
             ? dashboard.taiXes.map(driverCard).join('')
             : '<div class="dispatch-item">Không có tài xế khả dụng.</div>';
 
-        renderTripPopup();
-        renderDriverPopup();
+        renderTripDetail();
+        renderDriverDetail();
     }
 
     function selectTrip(id) {

@@ -27,7 +27,7 @@
 <style>
     .driver-shell {
         display: grid;
-        grid-template-columns: minmax(0, 1.6fr) minmax(320px, .95fr);
+        grid-template-columns: 1.8fr 1fr;
         gap: 18px;
     }
 
@@ -403,6 +403,20 @@
 
         .status-switch button {
             flex: 1;
+        }
+
+        .driver-shell {
+            grid-template-columns: 1fr;
+        }
+
+        .detail-card {
+            display: none;
+        }
+
+        .trip-modal-detail .modal-dialog {
+            margin-top: auto;
+            margin-bottom: 0;
+            max-height: 100vh;
         }
     }
 </style>

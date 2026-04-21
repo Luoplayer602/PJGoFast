@@ -1,0 +1,139 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Truy cập bị từ chối";
+}
+
+<style>
+    .access-denied-wrapper {
+        min-height: calc(100vh - 200px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+    }
+
+    .access-denied-card {
+        background: linear-gradient(135deg, #fff5f7 0%, #ede9fe 100%);
+        border-radius: 24px;
+        border: 1px solid #fbcfe8;
+        padding: 48px;
+        max-width: 500px;
+        text-align: center;
+        box-shadow: 0 14px 28px rgba(248,113,113,.10);
+    }
+
+    .access-denied-icon {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #f87171 0%, #fb7185 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 24px;
+        font-size: 2.2rem;
+        color: #fff;
+    }
+
+    .access-denied-title {
+        font-size: 1.6rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin-bottom: 12px;
+        letter-spacing: -.01em;
+    }
+
+    .access-denied-message {
+        color: #64748b;
+        font-size: .95rem;
+        line-height: 1.6;
+        margin-bottom: 32px;
+    }
+
+    .access-denied-details {
+        background: rgba(255,255,255,.6);
+        border-radius: 12px;
+        padding: 14px;
+        margin-bottom: 28px;
+        border-left: 4px solid #f87171;
+    }
+
+    .access-denied-details small {
+        color: #94a3b8;
+        font-size: .8rem;
+    }
+
+    .access-denied-details strong {
+        display: block;
+        color: #0f172a;
+        font-weight: 700;
+        margin-top: 4px;
+    }
+
+    .access-denied-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+    }
+
+    .access-denied-actions a,
+    .access-denied-actions button {
+        padding: 12px 20px;
+        border-radius: 12px;
+        font-weight: 700;
+        border: none;
+        cursor: pointer;
+        transition: all .2s ease;
+        font-size: .9rem;
+    }
+
+    .btn-primary-custom {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #fff;
+    }
+
+    .btn-primary-custom:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 24px rgba(102,126,234,.25);
+        text-decoration: none;
+    }
+
+    .btn-secondary-custom {
+        background: #f0f4f8;
+        color: #0f172a;
+        border: 1px solid #dbeafe;
+    }
+
+    .btn-secondary-custom:hover {
+        background: #e5e7eb;
+        text-decoration: none;
+    }
+</style>
+
+<div class="access-denied-wrapper">
+    <div class="access-denied-card">
+        <div class="access-denied-icon">
+            <i class="bi bi-shield-exclamation"></i>
+        </div>
+
+        <h1 class="access-denied-title">Truy cập bị từ chối</h1>
+
+        <p class="access-denied-message">
+            Xin lỗi, bạn không có quyền để truy cập vào trang này. Liên hệ với quản trị viên nếu bạn cho rằng đây là một lỗi.
+        </p>
+
+        <div class="access-denied-details">
+            <small>Lỗi HTTP</small>
+            <strong>403 Forbidden</strong>
+        </div>
+
+        <div class="access-denied-actions">
+            <a href="@Url.Action("Index", "Home")" class="btn-primary-custom">
+                <i class="bi bi-house-fill me-1"></i> Trang chủ
+            </a>
+            <button type="button" class="btn-secondary-custom" onclick="history.back()">
+                <i class="bi bi-arrow-left me-1"></i> Quay lại
+            </button>
+        </div>
+    </div>
+</div>
