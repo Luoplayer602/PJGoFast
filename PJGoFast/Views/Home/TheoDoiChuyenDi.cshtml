@@ -144,6 +144,7 @@
 </div>
 
 @section Scripts {
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
 <script>
     let trackingData = @Html.Raw(JsonSerializer.Serialize(Model, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
     let selectedTripId = trackingData.chuyenDangTheoDoi?.idChuyenDi || null;
@@ -246,9 +247,16 @@
         }
     }
 
+    const connection = new signalR.HubConnectionBuilder().withUrl('/hubs/notification').withAutomaticReconnect().build();
+    connection.on('DashboardChanged', refreshTracking);
+    connection.on('TripChanged', (id) => {
+        if (!selectedTripId || selectedTripId === id) refreshTracking();
+    });
+    connection.start().catch(() => {});
+
     renderTrips();
     renderDetail();
     renderLogs();
-    setInterval(refreshTracking, 7000);
+    setInterval(refreshTracking, 20000);
 </script>
 }

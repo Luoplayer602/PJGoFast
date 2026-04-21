@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using PJGoFast.Data;
 using PJGoFast.Services.Interfaces;
 using PJGoFast.ViewModels;
 using System.Security.Claims;
@@ -10,10 +12,14 @@ namespace PJGoFast.Controllers
     public class AdminController : Controller
     {
         private readonly IAdminService _adminService;
+        private readonly IChuyenDiService _chuyenDiService;
+        private readonly PJGoFastDbContext _context;
 
-        public AdminController(IAdminService adminService)
+        public AdminController(IAdminService adminService, IChuyenDiService chuyenDiService, PJGoFastDbContext context)
         {
             _adminService = adminService;
+            _chuyenDiService = chuyenDiService;
+            _context = context;
         }
 
         public async Task<IActionResult> Index()
@@ -139,6 +145,39 @@ namespace PJGoFast.Controllers
         public IActionResult AdminMenu()
         {
             return View();
+        }
+
+        public IActionResult QuanLyChuyenDi()
+        {
+            var trips = _context.ChuyenDis
+                .Include(c => c.KhachHang)
+                .Include(c => c.TaiXe)
+                .Include(c => c.Admin)
+                .OrderByDescending(t => t.ThoiGianTao)
+                .ToList();
+            return View(trips);
+        }
+
+        public IActionResult ChiTietChuyenDi(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                return NotFound();
+            }
+
+            var trip = _chuyenDiService.LayChuyenDiTheoId(id);
+            if (trip == null)
+            {
+                return NotFound();
+            }
+
+            return View(trip);
+        }
+
+        public IActionResult QuanLyKhachHang()
+        {
+            var customers = _context.KhachHangs.OrderByDescending(k => k.NgayDangKy).ToList();
+            return View(customers);
         }
 
     }

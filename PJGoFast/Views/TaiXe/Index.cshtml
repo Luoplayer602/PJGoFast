@@ -27,7 +27,7 @@
 <style>
     .driver-shell {
         display: grid;
-        grid-template-columns: minmax(0, 1.6fr) minmax(320px, .95fr);
+        grid-template-columns: 1.8fr 1fr;
         gap: 18px;
     }
 
@@ -404,6 +404,20 @@
         .status-switch button {
             flex: 1;
         }
+
+        .driver-shell {
+            grid-template-columns: 1fr;
+        }
+
+        .detail-card {
+            display: none;
+        }
+
+        .trip-modal-detail .modal-dialog {
+            margin-top: auto;
+            margin-bottom: 0;
+            max-height: 100vh;
+        }
     }
 </style>
 
@@ -593,6 +607,18 @@
 
 <div id="antiForgeryHost" class="d-none">@Html.AntiForgeryToken()</div>
 
+<div class="modal fade" id="tripDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Chi tiết chuyến</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="tripModalBody"></div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="confirmActionModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 rounded-4">
@@ -616,12 +642,14 @@
 </div>
 
 @section Scripts {
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
 <script>
     const antiForgeryHtml = document.querySelector('#antiForgeryHost input')?.outerHTML ?? '';
     let dashboardData = @Html.Raw(JsonSerializer.Serialize(Model, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
     let selectedTripId = dashboardData.chuyenDuocPhanCong?.[0]?.idChuyenDi || dashboardData.chuyenMoi?.[0]?.idChuyenDi || null;
     let pendingFormHtml = '';
     const confirmModal = new bootstrap.Modal(document.getElementById('confirmActionModal'));
+    const tripModal = new bootstrap.Modal(document.getElementById('tripDetailModal'));
 
     function statusText(status) {
         return {
@@ -757,6 +785,18 @@
                     ${logHtml || '<div class="notify-item">Chưa có nhật ký.</div>'}
                 </div>
             </div>`;
+
+        document.getElementById('tripModalBody').innerHTML = `
+            <div class="detail-grid">
+                <div class="detail-item"><small>Mã chuyến</small><strong>${trip.idChuyenDi}</strong></div>
+                <div class="detail-item"><small>Khách hàng</small><strong>${trip.khachHang?.hoVaTen ?? 'Chưa rõ'} · ${trip.khachHang?.sdt ?? ''}</strong></div>
+                <div class="detail-item"><small>Điểm đón</small><strong>${trip.diemDon}</strong></div>
+                <div class="detail-item"><small>Điểm đến</small><strong>${trip.diemDen}</strong></div>
+                <div class="detail-item"><small>Giờ đón</small><strong>${fmtDate(trip.thoiGianDon)}</strong></div>
+                <div class="detail-actions mt-3">
+                    ${buildActionButton(trip)}
+                </div>
+            </div>`;
     }
 
     function renderLists() {
@@ -781,6 +821,7 @@
     function selectTrip(id) {
         selectedTripId = id;
         renderLists();
+        tripModal.show();
     }
 
     function openConfirm(title, text, formHtml) {
@@ -815,7 +856,22 @@
         }
     }
 
+    const connection = new signalR.HubConnectionBuilder().withUrl('/hubs/notification').withAutomaticReconnect().build();
+    connection.on('DashboardChanged', refreshDashboard);
+    connection.on('TripChanged', () => refreshDashboard());
+    connection.start().catch(() => {});
+
+    function updateTimers() {
+        document.querySelectorAll('[data-seconds]').forEach(el => {
+            const now = Number(el.getAttribute('data-seconds') || '0');
+            const next = Math.max(0, now - 1);
+            el.setAttribute('data-seconds', next);
+            el.textContent = fmtTimer(next);
+        });
+    }
+
     renderLists();
-    setInterval(refreshDashboard, 8000);
+    setInterval(updateTimers, 1000);
+    setInterval(refreshDashboard, 20000);
 </script>
 }

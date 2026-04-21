@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using PJGoFast.Data;
+using PJGoFast.Hubs;
 using PJGoFast.Services.Implementations;
 using PJGoFast.Services.Interfaces;
+using PJGoFast.Workers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +15,8 @@ builder.Services.AddScoped<IChuyenDiService, ChuyenDiService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<ITaiXeService, TaiXeService>();
 builder.Services.AddControllersWithViews();
+builder.Services.AddSignalR();
+builder.Services.AddHostedService<ServerTimerWorker>();
 builder.Services.AddHttpClient();
 builder.Services.AddDbContext<PJGoFastDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")
@@ -22,6 +26,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
     {
         options.LoginPath = "/Login/Index";
+        options.AccessDeniedPath = "/Home/AccessDenied";
         options.Events = new CookieAuthenticationEvents
         {
             OnRedirectToLogin = context =>
@@ -57,6 +62,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
+app.MapHub<NotificationHub>("/hubs/notification");
 
 app.MapControllerRoute(
     name: "default",

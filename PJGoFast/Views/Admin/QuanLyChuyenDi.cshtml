@@ -1,0 +1,281 @@
+@using PJGoFast.Models.Entities
+@using PJGoFast.Models.Enums
+@model List<ChuyenDi>
+
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Quản lý Chuyến đi";
+}
+
+<style>
+    .page-hero {
+        background: linear-gradient(160deg, #ea580c 0%, #f97316 60%, #fb923c 100%);
+        color: #fff;
+        border-radius: 28px;
+        padding: 28px 24px;
+        box-shadow: 0 16px 40px rgba(249, 115, 22, .18);
+        margin-bottom: 18px;
+    }
+
+    .page-hero h1 {
+        font-size: clamp(1.5rem, 2vw, 2rem);
+        font-weight: 800;
+        margin-bottom: 8px;
+    }
+
+    .page-hero p {
+        margin: 0;
+        max-width: 680px;
+        color: rgba(255, 255, 255, .86);
+    }
+
+    .trips-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 16px;
+        margin-top: 18px;
+    }
+
+    .trip-card {
+        background: #fff;
+        border-radius: 20px;
+        padding: 18px;
+        box-shadow: 0 2px 14px rgba(15, 23, 42, .06);
+        border: 1.5px solid #f1f5f9;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+        text-decoration: none;
+        color: inherit;
+        cursor: pointer;
+    }
+
+    .trip-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 32px rgba(15, 23, 42, .12);
+        border-color: #e2e8f0;
+    }
+
+    .trip-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .trip-id {
+        font-size: .85rem;
+        font-weight: 700;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+    }
+
+    .trip-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: .7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+    }
+
+    .status-cho { background: #fef3c7; color: #b45309; }
+    .status-moi { background: #dbeafe; color: #1e40af; }
+    .status-da_phan_cong { background: #dbeafe; color: #1e40af; }
+    .status-da_nhan { background: #dcfce7; color: #166534; }
+    .status-dang_don { background: #dcfce7; color: #166534; }
+    .status-da_don { background: #c7d2fe; color: #3730a3; }
+    .status-dang_di_chuyen { background: #c7d2fe; color: #3730a3; }
+    .status-hoan_tat { background: #d1d5db; color: #374151; }
+    .status-huy { background: #fee2e2; color: #991b1b; }
+
+    .trip-route {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: .9rem;
+    }
+
+    .trip-route-icon {
+        color: #94a3b8;
+        font-size: 1.1rem;
+    }
+
+    .trip-info {
+        display: grid;
+        gap: 8px;
+        font-size: .85rem;
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px 0;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    .info-row:first-child {
+        border-top: none;
+    }
+
+    .info-label {
+        color: #6b7280;
+        font-weight: 600;
+    }
+
+    .info-value {
+        color: #111827;
+        font-weight: 700;
+    }
+
+    .trip-footer {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+    }
+
+    .btn-sm {
+        flex: 1;
+        padding: 8px 12px;
+        border-radius: 12px;
+        font-size: .8rem;
+        font-weight: 700;
+        border: none;
+        cursor: pointer;
+        transition: all .15s ease;
+        text-align: center;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+    }
+
+    .btn-sm-primary {
+        background: #2563eb;
+        color: #fff;
+    }
+
+    .btn-sm-primary:hover {
+        background: #1d4ed8;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #6b7280;
+    }
+
+    .empty-state-icon {
+        font-size: 3.5rem;
+        color: #d1d5db;
+        margin-bottom: 12px;
+    }
+
+    .empty-state h2 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0 0 8px;
+    }
+
+    .empty-state p {
+        margin: 0;
+        font-size: .95rem;
+    }
+
+    @@media (max-width: 768px) {
+        .trips-container {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="page-hero">
+    <h1><i class="bi bi-map-fill me-2"></i>Quản lý Chuyến đi</h1>
+    <p>Theo dõi, xem chi tiết và quản lý tất cả các chuyến đi trong hệ thống.</p>
+</div>
+
+@if (Model != null && Model.Any())
+{
+    <div class="trips-container">
+        @foreach (var trip in Model)
+        {
+            var statusText = trip.TrangThai switch
+            {
+                TrangThaiChuyen.CHO => "Chờ báo giá",
+                TrangThaiChuyen.MOI => "Chờ phân công",
+                TrangThaiChuyen.DA_PHAN_CONG => "Đã phân công",
+                TrangThaiChuyen.DA_NHAN => "Tài xế nhận",
+                TrangThaiChuyen.DANG_DON => "Đang đón",
+                TrangThaiChuyen.DA_DON => "Đã đón",
+                TrangThaiChuyen.DANG_DI_CHUYEN => "Đang di chuyển",
+                TrangThaiChuyen.HOAN_TAT => "Hoàn tất",
+                TrangThaiChuyen.HUY => "Đã hủy",
+                _ => trip.TrangThai.ToString()
+            };
+
+            var statusClass = trip.TrangThai.ToString().ToLower().Replace("_", "_");
+
+            <div class="trip-card">
+                <div class="trip-header">
+                    <div class="trip-id">
+                        <i class="bi bi-bookmark-fill me-1"></i>@trip.IdChuyenDi.Substring(0, 8)...
+                    </div>
+                    <span class="trip-status status-@statusClass">
+                        <i class="bi bi-flag-fill"></i>@statusText
+                    </span>
+                </div>
+
+                <div class="trip-route">
+                    <i class="bi bi-geo-alt-fill trip-route-icon"></i>
+                    <div>
+                        <div style="font-weight: 700; color: #111827;">@trip.DiemDon</div>
+                        <div style="color: #6b7280; font-size: .8rem;">→ @trip.DiemDen</div>
+                    </div>
+                </div>
+
+                <div class="trip-info">
+                    <div class="info-row">
+                        <span class="info-label"><i class="bi bi-person me-1"></i>Khách hàng</span>
+                        <span class="info-value">@(trip.KhachHang?.HoVaTen ?? "Không xác định")</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label"><i class="bi bi-car me-1"></i>Tài xế</span>
+                        <span class="info-value">@(trip.TaiXe?.HoVaTen ?? "Chưa phân công")</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label"><i class="bi bi-calendar-event me-1"></i>Thời gian</span>
+                        <span class="info-value">@trip.ThoiGianDon.ToString("HH:mm dd/MM")</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label"><i class="bi bi-cash-stack me-1"></i>Giá</span>
+                        <span class="info-value">@(trip.GiaTamTinh?.ToString("N0") ?? "0") đ</span>
+                    </div>
+                </div>
+
+                <div class="trip-footer">
+                    <a asp-action="ChiTietChuyenDi" asp-route-id="@trip.IdChuyenDi" class="btn-sm btn-sm-primary">
+                        <i class="bi bi-eye"></i> Chi tiết
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="empty-state">
+        <div class="empty-state-icon">
+            <i class="bi bi-inbox"></i>
+        </div>
+        <h2>Chưa có chuyến đi nào</h2>
+        <p>Hiện tại không có dữ liệu chuyến đi trong hệ thống.</p>
+    </div>
+}

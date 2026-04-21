@@ -1,0 +1,199 @@
+@{
+    Layout = null;
+    ViewData["Title"] = "Truy cập bị từ chối";
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — GoFast</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+
+        html, body {
+            min-height: 100vh;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+        }
+
+        .error-container {
+            background: #fff;
+            border-radius: 28px;
+            box-shadow: 0 28px 56px rgba(15,23,42,.24);
+            padding: 60px 40px;
+            max-width: 520px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .error-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f87171 0%, #fb7185 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            font-size: 2.5rem;
+            color: #fff;
+            box-shadow: 0 12px 28px rgba(248,113,113,.24);
+        }
+
+        .error-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 12px;
+            letter-spacing: -.02em;
+        }
+
+        .error-description {
+            color: #64748b;
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 28px;
+        }
+
+        .error-details {
+            background: #f8f9fb;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 28px;
+            border-left: 4px solid #f87171;
+        }
+
+        .error-details small {
+            display: block;
+            color: #64748b;
+            font-size: .85rem;
+            line-height: 1.5;
+        }
+
+        .error-details strong {
+            display: block;
+            color: #0f172a;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+
+        .action-buttons {
+            display: grid;
+            gap: 12px;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .btn-home {
+            padding: 14px 24px;
+            border-radius: 14px;
+            font-weight: 800;
+            border: none;
+            cursor: pointer;
+            transition: all .2s ease;
+            font-size: .95rem;
+            letter-spacing: .01em;
+        }
+
+        .btn-home.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+        }
+
+        .btn-home.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(102,126,234,.30);
+        }
+
+        .btn-home.secondary {
+            background: #f3f4f6;
+            color: #0f172a;
+            border: 1px solid #e5e7eb;
+        }
+
+        .btn-home.secondary:hover {
+            background: #e5e7eb;
+            border-color: #d1d5db;
+        }
+
+        .security-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #e2e8f0;
+            font-size: .85rem;
+            color: #64748b;
+        }
+
+        .security-badge i {
+            color: #ec4899;
+            font-size: 1rem;
+        }
+
+        @@media (max-width: 480px) {
+            .error-container {
+                padding: 40px 24px;
+            }
+
+            .error-title {
+                font-size: 1.5rem;
+            }
+
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .error-icon {
+                width: 64px;
+                height: 64px;
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="error-container">
+    <div class="error-icon">
+        <i class="bi bi-shield-exclamation"></i>
+    </div>
+
+    <h1 class="error-title">Truy cập bị từ chối</h1>
+
+    <p class="error-description">
+        Xin lỗi, bạn không có quyền truy cập vào trang này. Vui lòng kiểm tra lại quyền hạn của tài khoản.
+    </p>
+
+    <div class="error-details">
+        <small>Lỗi HTTP</small>
+        <strong>403 Forbidden</strong>
+    </div>
+
+    <div class="action-buttons">
+        <a href="/" class="btn-home primary">
+            <i class="bi bi-house-fill me-1"></i> Trang chủ
+        </a>
+        <button type="button" class="btn-home secondary" onclick="history.back()">
+            <i class="bi bi-arrow-left me-1"></i> Quay lại
+        </button>
+    </div>
+
+    <div class="security-badge">
+        <i class="bi bi-shield-lock"></i>
+        <span>Trang này được bảo vệ</span>
+    </div>
+</div>
+
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

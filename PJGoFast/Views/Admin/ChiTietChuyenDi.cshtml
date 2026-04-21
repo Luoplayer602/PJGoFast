@@ -3,12 +3,9 @@
 @model ChuyenDi
 
 @{
-    ViewData["Title"] = "Chi tiết chuyến đi";
-    var userAgent = Context.Request.Headers["User-Agent"].ToString().ToLower();
-    var isMobile = userAgent.Contains("mobi") || userAgent.Contains("android") || userAgent.Contains("iphone");
-    Layout = isMobile ? "_LayoutMobile" : "_Layout";
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Chi tiết Chuyến đi";
 
-    var coTheHuy = Model.TrangThai == TrangThaiChuyen.CHO || Model.TrangThai == TrangThaiChuyen.MOI || Model.TrangThai == TrangThaiChuyen.DA_PHAN_CONG;
     var statusText = Model.TrangThai switch
     {
         TrangThaiChuyen.CHO => "Đang xem báo giá",
@@ -35,14 +32,14 @@
         background: #fff;
         border-radius: 24px;
         border: 1px solid #e2e8f0;
-        box-shadow: 0 10px 28px rgba(15,23,42,.06);
+        box-shadow: 0 10px 28px rgba(15, 23, 42, .06);
         overflow: hidden;
     }
 
     .trip-hero {
         padding: 24px;
         color: #fff;
-        background: linear-gradient(160deg, #0f172a, #1d4ed8 72%, #60a5fa);
+        background: linear-gradient(160deg, #0f172a, #ea580c 72%, #fb923c);
     }
 
     .trip-hero h1 {
@@ -57,8 +54,8 @@
         gap: 8px;
         padding: 8px 12px;
         border-radius: 999px;
-        background: rgba(255,255,255,.14);
-        border: 1px solid rgba(255,255,255,.18);
+        background: rgba(255, 255, 255, .14);
+        border: 1px solid rgba(255, 255, 255, .18);
         font-size: .8rem;
         font-weight: 700;
         margin: 12px 8px 0 0;
@@ -113,6 +110,38 @@
         font-weight: 800;
     }
 
+    .logs-container {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .log-item {
+        padding: 12px;
+        border-left: 3px solid #2563eb;
+        background: #eff6ff;
+        border-radius: 8px;
+        margin-bottom: 10px;
+    }
+
+    .log-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .log-time {
+        font-size: .75rem;
+        font-weight: 700;
+        color: #2563eb;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+    }
+
+    .log-text {
+        margin: 4px 0 0;
+        font-size: .9rem;
+        color: #0f172a;
+        line-height: 1.5;
+    }
+
     @@media (max-width: 992px) {
         .trip-detail-page {
             grid-template-columns: 1fr;
@@ -123,7 +152,7 @@
 <div class="trip-detail-page">
     <section class="trip-card">
         <div class="trip-hero">
-            <h1>Chuyến @Model.IdChuyenDi</h1>
+            <h1>Chuyến @Model.IdChuyenDi.Substring(0, 8)...</h1>
             <div>Thông tin trạng thái, lộ trình và người phụ trách của chuyến đi.</div>
             <div>
                 <span class="hero-chip"><i class="bi bi-flag"></i>@statusText</span>
@@ -137,31 +166,22 @@
                 <h2>Lộ trình</h2>
                 <div class="info-item"><small>Điểm đón</small><strong>@Model.DiemDon</strong></div>
                 <div class="info-item"><small>Điểm đến</small><strong>@Model.DiemDen</strong></div>
+                <div class="info-item"><small>Loại xe yêu cầu</small><strong>@Model.LoaiXeYeuCau</strong></div>
                 <div class="info-item"><small>Ghi chú</small><strong>@(string.IsNullOrWhiteSpace(Model.GhiChu) ? "Không có" : Model.GhiChu)</strong></div>
             </div>
 
             <div class="info-block">
                 <h2>Người phụ trách</h2>
-                <div class="info-item"><small>Tài xế</small><strong>@(Model.TaiXe != null ? $"{Model.TaiXe.HoVaTen} · {Model.TaiXe.SDT}" : "Chưa có tài xế")</strong></div>
-                <div class="info-item"><small>Điều phối</small><strong>@(Model.Admin != null ? $"{Model.Admin.HoVaTen} · {Model.Admin.SDT}" : "Chưa có điều phối")</strong></div>
+                <div class="info-item"><small>Khách hàng</small><strong>@(Model.KhachHang != null ? $"{Model.KhachHang.HoVaTen} · {Model.KhachHang.SDT}" : "Không xác định")</strong></div>
+                <div class="info-item"><small>Tài xế</small><strong>@(Model.TaiXe != null ? $"{Model.TaiXe.HoVaTen} · {Model.TaiXe.SDT}" : "Chưa phân công")</strong></div>
+                <div class="info-item"><small>Điều phối</small><strong>@(Model.Admin != null ? $"{Model.Admin.HoVaTen} · {Model.Admin.SDT}" : "Chưa phân công")</strong></div>
             </div>
 
             <div class="info-block">
-                <h2>Nhật ký chuyến đi</h2>
-                @if (Model.NhatKys != null && Model.NhatKys.Any())
-                {
-                    foreach (var log in Model.NhatKys.OrderByDescending(x => x.ThoiGian))
-                    {
-                        <div class="info-item">
-                            <small>@log.ThoiGian.ToString("HH:mm:ss dd/MM/yyyy")</small>
-                            <strong>@log.LogText</strong>
-                        </div>
-                    }
-                }
-                else
-                {
-                    <div class="info-item"><strong>Chưa có nhật ký.</strong></div>
-                }
+                <h2>Thanh toán</h2>
+                <div class="info-item"><small>Giá tạm tính</small><strong>@(Model.GiaTamTinh?.ToString("N0") ?? "0") đ</strong></div>
+                <div class="info-item"><small>Giá thực tế</small><strong>@(Model.GiaThucTe?.ToString("N0") ?? "Chưa xác định") đ</strong></div>
+                <div class="info-item"><small>Trạng thái thanh toán</small><strong>@(Model.ThanhToan != null ? "Đã thanh toán" : "Chưa thanh toán")</strong></div>
             </div>
         </div>
     </section>
@@ -169,40 +189,33 @@
     <section class="trip-card">
         <div class="trip-body">
             <div class="info-block">
-                <h2>Thao tác</h2>
-                <div class="action-stack">
-                    <a asp-action="TheoDoiChuyenDi" asp-route-IdChuyenDi="@Model.IdChuyenDi" class="btn btn-primary">
-                        <i class="bi bi-broadcast-pin me-1"></i> Xem tiến trình & nhật ký
-                    </a>
-                    <a asp-action="History" class="btn btn-light border">
-                        <i class="bi bi-arrow-left me-1"></i> Quay lại lịch sử
-                    </a>
-                    @if (coTheHuy)
-                    {
-                        <button type="button" class="btn btn-outline-danger" onclick="confirmCancel()">
-                            <i class="bi bi-x-circle me-1"></i> Hủy chuyến
-                        </button>
-                    }
-                </div>
+                <h2>Nhật ký chuyến đi</h2>
+                @if (Model.NhatKys != null && Model.NhatKys.Any())
+                {
+                    <div class="logs-container">
+                        @foreach (var log in Model.NhatKys.OrderByDescending(x => x.ThoiGian))
+                        {
+                            <div class="log-item">
+                                <div class="log-time">@log.ThoiGian.ToString("HH:mm:ss dd/MM/yyyy")</div>
+                                <div class="log-text">@log.LogText</div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div style="color: #6b7280; text-align: center; padding: 20px 0;">
+                        <i class="bi bi-inbox" style="font-size: 1.5rem; display: block; margin-bottom: 10px;"></i>
+                        Chưa có nhật ký nào.
+                    </div>
+                }
+            </div>
+
+            <div class="action-stack">
+                <a asp-action="QuanLyChuyenDi" class="btn btn-light border">
+                    <i class="bi bi-arrow-left me-1"></i> Quay lại danh sách
+                </a>
             </div>
         </div>
     </section>
 </div>
-
-@if (coTheHuy)
-{
-    <form id="cancelTripForm" asp-action="HuyChuyenDi" method="post" class="d-none">
-        @Html.AntiForgeryToken()
-        <input type="hidden" name="IdChuyenDi" value="@Model.IdChuyenDi" />
-    </form>
-
-    @section Scripts {
-    <script>
-        function confirmCancel() {
-            if (confirm('Xác nhận hủy chuyến này?')) {
-                document.getElementById('cancelTripForm').submit();
-            }
-        }
-    </script>
-    }
-}

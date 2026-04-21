@@ -1,60 +1,349 @@
-﻿@* For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860 *@
 @{
-    Layout = "_ImportBootstrap";
-    ViewData["Title"] = "Đăng nhập";
+    Layout = null;
+    ViewData["Title"] = "Đăng nhập — GoFast";
 }
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
 
-<style>
-    body {
-        background-color: #f8f9fa;
-    }
-</style>
+        html, body {
+            min-height: 100vh;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #f0f4fb;
+        }
 
-<div class="container d-flex flex-column justify-content-center min-vh-100">
-    <div class="row justify-content-center">
-        <div class="col-xl-5 col-lg-6 col-md-8 col-sm-10">
-            <div class="card shadow-lg border-0 rounded-lg mt-5 mb-5">
-                
-                <div class="card-header bg-primary text-white text-center py-4">
-                    <h3 class="font-weight-light my-1">Đăng nhập</h3>
+        /* ── Split layout ── */
+        .page-wrap {
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        /* ── Left — brand panel ── */
+        .brand-panel {
+            background: linear-gradient(160deg, #0f172a 0%, #1e3a8a 50%, #2563eb 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 60px 56px;
+            position: relative;
+            overflow: hidden;
+        }
+        .brand-panel::before {
+            content: '';
+            position: absolute; top: -120px; right: -120px;
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(96,165,250,.18) 0%, transparent 65%);
+            pointer-events: none;
+        }
+        .brand-panel::after {
+            content: '';
+            position: absolute; bottom: -80px; left: -80px;
+            width: 320px; height: 320px;
+            background: radial-gradient(circle, rgba(37,99,235,.14) 0%, transparent 65%);
+            pointer-events: none;
+        }
+
+        .brand-logo {
+            display: flex; align-items: center; gap: 12px;
+            font-size: 1.6rem; font-weight: 900;
+            color: #fff; letter-spacing: -.02em;
+            margin-bottom: 56px; text-decoration: none;
+        }
+        .brand-logo .logo-icon {
+            width: 46px; height: 46px; border-radius: 14px;
+            background: rgba(255,255,255,.16);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.3rem;
+        }
+
+        .brand-tagline {
+            font-size: clamp(1.6rem, 2.5vw, 2.4rem);
+            font-weight: 800; color: #fff;
+            line-height: 1.25; letter-spacing: -.02em;
+            margin-bottom: 20px;
+        }
+        .brand-tagline span { color: #93c5fd; }
+
+        .brand-desc {
+            color: rgba(255,255,255,.65);
+            font-size: .98rem; line-height: 1.7;
+            max-width: 380px; margin-bottom: 48px;
+        }
+
+        .brand-features { display: flex; flex-direction: column; gap: 14px; }
+        .feature-item {
+            display: flex; align-items: center; gap: 12px;
+            color: rgba(255,255,255,.85); font-size: .88rem;
+        }
+        .feature-item .fi-icon {
+            width: 32px; height: 32px; border-radius: 10px;
+            background: rgba(255,255,255,.12);
+            display: flex; align-items: center; justify-content: center;
+            font-size: .85rem; flex-shrink: 0;
+        }
+
+        /* ── Right — form panel ── */
+        .form-panel {
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            padding: 48px 32px;
+            background: #f0f4fb;
+        }
+
+        .form-box { width: 100%; max-width: 440px; }
+
+        .form-title {
+            font-size: 1.6rem; font-weight: 800;
+            color: #0f172a; letter-spacing: -.02em;
+            margin-bottom: 4px;
+        }
+        .form-subtitle {
+            color: #64748b; font-size: .9rem;
+            margin-bottom: 32px;
+        }
+
+        /* ── Card ── */
+        .login-card {
+            background: #fff;
+            border-radius: 24px;
+            padding: 32px 28px;
+            box-shadow: 0 8px 40px rgba(15,23,42,.08), 0 1px 4px rgba(15,23,42,.04);
+        }
+
+        /* ── Field ── */
+        .field-wrap { margin-bottom: 18px; }
+        .field-label {
+            display: block; font-size: .82rem; font-weight: 700;
+            color: #374151; margin-bottom: 7px; letter-spacing: .01em;
+        }
+        .input-icon-wrap { position: relative; }
+        .input-icon-wrap .icon {
+            position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+            color: #94a3b8; font-size: 1rem; pointer-events: none;
+        }
+        .field-input {
+            width: 100%; padding: 14px 16px 14px 44px;
+            border: 1.5px solid #e2e8f0; border-radius: 14px;
+            font-size: .95rem; color: #111827; background: #fff;
+            outline: none; transition: border-color .15s, box-shadow .15s;
+            min-height: 52px;
+        }
+        .field-input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+        }
+
+        /* Eye toggle */
+        .eye-toggle {
+            position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; color: #94a3b8;
+            cursor: pointer; padding: 4px; font-size: 1rem;
+            transition: color .15s;
+        }
+        .eye-toggle:hover { color: #374151; }
+        .field-input.has-eye { padding-right: 44px; }
+
+        /* ── Error alert ── */
+        .error-alert {
+            background: #fef2f2; border: 1.5px solid #fca5a5;
+            border-radius: 14px; padding: 12px 16px;
+            display: flex; align-items: flex-start; gap: 10px;
+            font-size: .86rem; color: #991b1b; margin-bottom: 20px;
+        }
+        .error-alert i { flex-shrink: 0; margin-top: 1px; }
+
+        /* ── Submit button ── */
+        .btn-login {
+            width: 100%; padding: 14px;
+            background: #2563eb; color: #fff;
+            border: none; border-radius: 14px;
+            font-size: .97rem; font-weight: 800;
+            cursor: pointer; letter-spacing: .01em;
+            transition: background .15s, transform .1s, box-shadow .15s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            margin-top: 6px;
+        }
+        .btn-login:hover {
+            background: #1d4ed8; transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(37,99,235,.3);
+        }
+        .btn-login:active { transform: translateY(0); }
+
+        /* ── Register link ── */
+        .register-link {
+            text-align: center; margin-top: 20px;
+            font-size: .86rem; color: #64748b;
+        }
+        .register-link a {
+            color: #2563eb; font-weight: 700; text-decoration: none;
+        }
+        .register-link a:hover { text-decoration: underline; }
+
+        /* ── Divider ── */
+        .field-divider {
+            border: none; border-top: 1.5px dashed #e2e8f0;
+            margin: 22px 0 20px;
+        }
+
+        /* ── Trusted badge ── */
+        .trust-row {
+            display: flex; align-items: center; justify-content: center;
+            gap: 6px; margin-top: 24px;
+            font-size: .78rem; color: #94a3b8;
+        }
+        .trust-row i { color: #22c55e; font-size: .9rem; }
+
+        /* ── Responsive ── */
+        @@media (max-width: 768px) {
+            .page-wrap { grid-template-columns: 1fr; }
+            .brand-panel { display: none; }
+            .form-panel { padding: 32px 20px; }
+            .form-box { max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="page-wrap">
+
+    <!-- ── LEFT: Brand panel ── -->
+    <div class="brand-panel">
+        <a class="brand-logo" href="/">
+            <div class="logo-icon"><i class="bi bi-lightning-charge-fill"></i></div>
+            GoFast
+        </a>
+
+        <div class="brand-tagline">
+            Chào mừng<br>
+            trở lại <span>GoFast</span>.
+        </div>
+
+        <p class="brand-desc">
+            Đăng nhập để đặt chuyến đi, theo dõi hành trình và quản lý tài khoản của bạn.
+        </p>
+
+        <div class="brand-features">
+            <div class="feature-item">
+                <div class="fi-icon">
+                    <i class="bi bi-shield-fill-check" style="color:#86efac;"></i>
                 </div>
-
-                <div class="card-body p-4 p-md-5">
-                    
-                    @if (!string.IsNullOrEmpty(ViewBag.Error))
-                    {
-                        <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
-                            @ViewBag.Error
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    }
-
-                    <form asp-action="Index" asp-controller="Login" method="post">
-                        <div class="form-floating mb-4">
-                            <input class="form-control rounded-3" id="sdt" name="sdt" type="text" placeholder="Nhập số điện thoại..." required />
-                            <label for="sdt" class="text-muted">Số điện thoại</label>
-                        </div>
-
-                        <div class="form-floating mb-4">
-                            <input class="form-control rounded-3" id="matKhau" name="matKhau" type="password" placeholder="Nhập mật khẩu..." required />
-                            <label for="matKhau" class="text-muted">Mật khẩu</label>
-                        </div>
-
-                        <div class="d-grid mt-4 mb-3">
-                            <button class="btn btn-primary btn-lg rounded-3 shadow-sm py-2" type="submit">
-                                Đăng nhập
-                            </button>
-                        </div>
-                    </form>
+                <span>Đăng nhập bảo mật, mã hoá đầu cuối</span>
+            </div>
+            <div class="feature-item">
+                <div class="fi-icon">
+                    <i class="bi bi-clock-fill" style="color:#fde68a;"></i>
                 </div>
-                
-                <div class="card-footer text-center py-3 bg-light">
-                    <div class="small">
-                        <a href="/Login/Register" class="text-decoration-none">Chưa có tài khoản? Đăng ký ngay!</a>
-                    </div>
+                <span>Lịch sử chuyến đi được lưu tự động</span>
+            </div>
+            <div class="feature-item">
+                <div class="fi-icon">
+                    <i class="bi bi-headset" style="color:#f9a8d4;"></i>
                 </div>
-
+                <span>Hỗ trợ 24/7 khi gặp sự cố</span>
             </div>
         </div>
     </div>
+
+    <!-- ── RIGHT: Form panel ── -->
+    <div class="form-panel">
+        <div class="form-box">
+
+            <div class="form-title">Đăng nhập</div>
+            <p class="form-subtitle">Nhập số điện thoại và mật khẩu để tiếp tục.</p>
+
+            <div class="login-card">
+
+                @if (!string.IsNullOrEmpty(ViewBag.Error))
+                {
+                    <div class="error-alert">
+                        <i class="bi bi-exclamation-circle-fill"></i>
+                        <span>@ViewBag.Error</span>
+                    </div>
+                }
+
+                <form asp-action="Index" asp-controller="Login" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <!-- Số điện thoại -->
+                    <div class="field-wrap">
+                        <label class="field-label" for="sdt">
+                            Số điện thoại <span style="color:#ef4444;">*</span>
+                        </label>
+                        <div class="input-icon-wrap">
+                            <i class="bi bi-telephone-fill icon"></i>
+                            <input class="field-input"
+                                   id="sdt" name="sdt" type="tel"
+                                   placeholder="0912 345 678"
+                                   autocomplete="tel"
+                                   maxlength="15"
+                                   required />
+                        </div>
+                    </div>
+
+                    <!-- Mật khẩu -->
+                    <div class="field-wrap" style="margin-bottom: 24px;">
+                        <label class="field-label" for="matKhau">
+                            Mật khẩu <span style="color:#ef4444;">*</span>
+                        </label>
+                        <div class="input-icon-wrap">
+                            <i class="bi bi-lock-fill icon"></i>
+                            <input class="field-input has-eye"
+                                   id="matKhau" name="matKhau" type="password"
+                                   placeholder="Nhập mật khẩu"
+                                   autocomplete="current-password"
+                                   required />
+                            <button type="button" class="eye-toggle" onclick="toggleEye()">
+                                <i class="bi bi-eye" id="eyeIcon"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Submit -->
+                    <button type="submit" class="btn-login">
+                        <i class="bi bi-box-arrow-in-right"></i> Đăng nhập
+                    </button>
+
+                </form>
+            </div>
+
+            <div class="register-link">
+                Chưa có tài khoản?
+                <a asp-controller="Login" asp-action="Register">Đăng ký ngay</a>
+            </div>
+
+            <div class="trust-row">
+                <i class="bi bi-shield-fill-check"></i>
+                Kết nối được bảo mật bằng mã hoá SSL
+            </div>
+
+        </div>
+    </div>
+
 </div>
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function toggleEye() {
+        const input = document.getElementById('matKhau');
+        const icon  = document.getElementById('eyeIcon');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.className = 'bi bi-eye-slash';
+        } else {
+            input.type = 'password';
+            icon.className = 'bi bi-eye';
+        }
+    }
+</script>
+</body>
+</html>
